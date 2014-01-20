@@ -9,6 +9,7 @@ import(
 
 var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
+var invalidTitle = regexp.MustCompile("^$")
 
 type Page struct{
 	Title string
@@ -33,6 +34,7 @@ func main (){
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
+	//http.HandleFunc("/",makeHandler(redirectHandler))
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 	http.ListenAndServe(":8080", nil)
 }
@@ -42,13 +44,30 @@ func handler (w http.ResponseWriter, r *http.Request) {
 }
 
 func viewHandler (w http.ResponseWriter, r *http.Request, title string){
+	//figuring out the best way to forbid empty titles
+	//m := invalidTitle.FindStringSubmatch(title)
+        /*if len(title) == 0 {
+        	title := "start"
+        	http.Redirect(w,r,"/view/"+title,http.StatusFound)
+            http.NotFound(w, r)
+                        
+		}*/
+	
 	p, err := loadPage(title)
 	if err !=nil {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 		return
 	}
+		
+	
 	renderTemplate(w, "view", p)
 }
+/*
+func redirectHandler(w http.ResponseWriter, r *http.Request, title string){
+	title = "start"
+    http.Redirect(w,r,"/view/"+title,http.StatusFound)
+    return
+}*/
 
 func editHandler( w http.ResponseWriter, r *http.Request, title string){
 	p, err := loadPage(title)
@@ -77,13 +96,17 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string){
 	}
 	http.Redirect( w, r, "/view/"+title, http.StatusFound)
 }
+
+
 	
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func (w http.ResponseWriter, r *http.Request){
 		m := validPath.FindStringSubmatch(r.URL.Path)
         if m == nil {
+        	//title := "start"
+        	//http.Redirect(w,r,"/view/"+title,http.StatusFound)
             http.NotFound(w, r)
-            return
+                        
 		}
 		
 		fn(w, r, m[2])
