@@ -36,6 +36,7 @@ func main (){
 	http.HandleFunc("/save/", makeHandler(saveHandler))
 	//http.HandleFunc("/",makeHandler(redirectHandler))
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+	http.HandleFunc("/", makeRedirectHandler("/view/start"))
 	http.ListenAndServe(":8080", nil)
 }
 
@@ -68,6 +69,13 @@ func redirectHandler(w http.ResponseWriter, r *http.Request, title string){
     http.Redirect(w,r,"/view/"+title,http.StatusFound)
     return
 }*/
+
+func makeRedirectHandler(target string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request){
+		http.Redirect(w,r,target, http.StatusFound)
+		return
+	}
+}
 
 func editHandler( w http.ResponseWriter, r *http.Request, title string){
 	p, err := loadPage(title)
