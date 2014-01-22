@@ -111,12 +111,15 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 	return func (w http.ResponseWriter, r *http.Request){
 		m := validPath.FindStringSubmatch(r.URL.Path)
         if m == nil {
-        	//title := "start"
-        	//http.Redirect(w,r,"/view/"+title,http.StatusFound)
-            http.NotFound(w, r)
+        	println	("Kragen Hagen Fragen Plagen Sagen")
+        	title := "start"
+        	http.Redirect(w,r,"/view/"+title,http.StatusFound)
+
+            //http.NotFound(w, r)
                         
-		}
+		}else{
 		
 		fn(w, r, m[2])
+		}
 	}
 }
