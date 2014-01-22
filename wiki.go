@@ -17,12 +17,12 @@ type Page struct{
 }
 
 func (p *Page) save() error {
-	filename := p.Title + ".txt"
+	filename := "./articles/" + p.Title + ".txt"
 	return ioutil.WriteFile(filename, p.Body, 0600)
 }
 
-func loadPage(title string) (*Page, error) {
-	filename :=title + ".txt"
+func loadPage (title string) (*Page, error) {
+	filename :="./articles/" + title + ".txt"
 	body,err :=ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -34,8 +34,8 @@ func main (){
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
-	//http.HandleFunc("/",makeHandler(redirectHandler))
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+	//http.Handle("/articles/", http.StripPrefix("/articles/", http.FileServer(http.Dir("./articles"))))
 	http.HandleFunc("/", makeRedirectHandler("/view/start"))
 	http.ListenAndServe(":8080", nil)
 }
@@ -45,15 +45,6 @@ func handler (w http.ResponseWriter, r *http.Request) {
 }
 
 func viewHandler (w http.ResponseWriter, r *http.Request, title string){
-	//figuring out the best way to forbid empty titles
-	//m := invalidTitle.FindStringSubmatch(title)
-        /*if len(title) == 0 {
-        	title := "start"
-        	http.Redirect(w,r,"/view/"+title,http.StatusFound)
-            http.NotFound(w, r)
-                        
-		}*/
-	
 	p, err := loadPage(title)
 	if err !=nil {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
@@ -63,21 +54,15 @@ func viewHandler (w http.ResponseWriter, r *http.Request, title string){
 	
 	renderTemplate(w, "view", p)
 }
-/*
-func redirectHandler(w http.ResponseWriter, r *http.Request, title string){
-	title = "start"
-    http.Redirect(w,r,"/view/"+title,http.StatusFound)
-    return
-}*/
 
-func makeRedirectHandler(target string) http.HandlerFunc {
+func makeRedirectHandler (target string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request){
 		http.Redirect(w,r,target, http.StatusFound)
 		return
 	}
 }
 
-func editHandler( w http.ResponseWriter, r *http.Request, title string){
+func editHandler ( w http.ResponseWriter, r *http.Request, title string){
 	p, err := loadPage(title)
 	if err != nil {
 		p = &Page{Title:title}
@@ -94,7 +79,7 @@ func renderTemplate (w http.ResponseWriter, tmpl string, p *Page){
 	}
 }
 
-func saveHandler(w http.ResponseWriter, r *http.Request, title string){
+func saveHandler (w http.ResponseWriter, r *http.Request, title string){
 	body := r.FormValue("body")
 	p := &Page{Title: title, Body: []byte(body)}
 	err := p.save()
@@ -111,15 +96,10 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 	return func (w http.ResponseWriter, r *http.Request){
 		m := validPath.FindStringSubmatch(r.URL.Path)
         if m == nil {
-        	println	("Kragen Hagen Fragen Plagen Sagen")
         	title := "start"
         	http.Redirect(w,r,"/view/"+title,http.StatusFound)
-
-            //http.NotFound(w, r)
-                        
 		}else{
-		
-		fn(w, r, m[2])
+			fn(w, r, m[2])
 		}
 	}
 }
