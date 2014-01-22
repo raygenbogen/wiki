@@ -7,7 +7,7 @@ import(
 	"regexp"
 	)
 
-var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
+var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 var invalidTitle = regexp.MustCompile("^$")
 
