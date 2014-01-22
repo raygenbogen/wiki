@@ -14,20 +14,33 @@ var invalidTitle = regexp.MustCompile("^$")
 type Page struct{
 	Title string
 	Body [] byte
+	DisplayBody template.HTML
 }
 
 func (p *Page) save() error {
-	filename := "./articles/" + p.Title + ".txt"
+	filename := "./articles/" + p.Title
 	return ioutil.WriteFile(filename, p.Body, 0600)
 }
 
 func loadPage (title string) (*Page, error) {
-	filename :="./articles/" + title + ".txt"
-	body,err :=ioutil.ReadFile(filename)
+	var body []byte 
+	var err error
+	var dBody template.HTML
+	if title == "start"{
+		files, erro := ioutil.ReadDir("./articles/") 
+		err = erro
+		for _, f := range files {
+			HTMLAttr := "<li><a href= /view/"+f.Name() + ">" + f.Name() + "</a></li>"
+			dBody += template.HTML(HTMLAttr)
+		}
+	}else{
+		filename :="./articles/" + title
+		body,err = ioutil.ReadFile(filename)
+	}
 	if err != nil {
 		return nil, err
 	}
-	return &Page{Title: title, Body: body}, nil
+	return &Page{Title: title, Body: body, DisplayBody: dBody}, nil
 }
 
 func main (){
@@ -35,11 +48,13 @@ func main (){
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
-	//http.Handle("/articles/", http.StripPrefix("/articles/", http.FileServer(http.Dir("./articles"))))
 	http.HandleFunc("/", makeRedirectHandler("/view/start"))
 	http.ListenAndServe(":8080", nil)
 }
 
+func startHandler (w http.ResponseWriter, r *http.Request){
+
+}
 func handler (w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 }
@@ -98,6 +113,7 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
         if m == nil {
         	title := "start"
         	http.Redirect(w,r,"/view/"+title,http.StatusFound)
+
 		}else{
 			fn(w, r, m[2])
 		}
