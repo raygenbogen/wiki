@@ -1,5 +1,21 @@
-<h1>{{.Title}}</h1>
-<link rel="stylesheet" href ="/static/wiki.css">
-<p>[<a href="/edit/{{.Title}}">edit</a>]</p>
-<div>{{printf "%s" .Body}}</div>
-<ul>{{.DisplayBody}}</ul>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>{{.Title}}</title>
+<link rel="stylesheet" href ="/static/css/bootstrap.css">
+</head>
+
+<body>
+<ul class="nav nav-tabs">
+  <li class="active"><a href="/view/start">Home</a></li>
+  <li><a href="/edit/{{.Title}}">Edit this Page!</a></li>
+ </ul>
+<div>{{.DisplayBody}}</div>
+</body>
+
+</html>
+

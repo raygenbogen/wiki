@@ -5,6 +5,7 @@ import(
 	"net/http"
 	"html/template"
 	"regexp"
+	"github.com/russross/blackfriday"
 	)
 
 var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html"))
@@ -29,6 +30,7 @@ func loadPage (title string) (*Page, error) {
 	if title == "start"{
 		files, erro := ioutil.ReadDir("./articles/") 
 		err = erro
+		dBody = "  Welcome! Have a look at the existing pages below or create a new one. Later. When you actually can.<br><br>"
 		for _, f := range files {
 			HTMLAttr := "<li><a href= /view/"+f.Name() + ">" + f.Name() + "</a></li>"
 			dBody += template.HTML(HTMLAttr)
@@ -36,11 +38,12 @@ func loadPage (title string) (*Page, error) {
 	}else{
 		filename :="./articles/" + title
 		body,err = ioutil.ReadFile(filename)
+		dBody = template.HTML(blackfriday.MarkdownBasic(body))
 	}
 	if err != nil {
 		return nil, err
 	}
-	return &Page{Title: title, Body: body, DisplayBody: dBody}, nil
+	return &Page{Title: title, Body: body , DisplayBody: dBody}, nil
 }
 
 func main (){
