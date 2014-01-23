@@ -6,6 +6,7 @@ import(
 	"html/template"
 	"regexp"
 	"github.com/russross/blackfriday"
+	"log"
 	)
 
 var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html"))
@@ -30,7 +31,7 @@ func loadPage (title string) (*Page, error) {
 	if title == "start"{
 		files, erro := ioutil.ReadDir("./articles/") 
 		err = erro
-		dBody = "  Welcome! Have a look at the existing pages below or create a new one. Later. When you actually can.<br><br>"
+		dBody = "Welcome! Have a look at the existing pages below or create a new one.<br><br>"
 		for _, f := range files {
 			HTMLAttr := "<li><a href= /view/"+f.Name() + ">" + f.Name() + "</a></li>"
 			dBody += template.HTML(HTMLAttr)
@@ -47,13 +48,36 @@ func loadPage (title string) (*Page, error) {
 }
 
 func main (){
+	//go http.ListenAndServeTLS(":10443", "./static/cert.pem","./static/key.pem", nil)
+	//http.ListenAndServe(":8080", http.HandlerFunc(betterProto))
+	/*if err := http.ListenAndServe(":8080", http.HandlerFunc(betterProto));
+		err != nil {
+		log.Fatalf("ListenAndServe error: %v", err)
+	}*/
+	
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 	http.HandleFunc("/", makeRedirectHandler("/view/start"))
-	http.ListenAndServe(":8080", nil)
+	if err := http.ListenAndServeTLS(":10443", "./static/certificate.pem", "./static/key.pem", nil); err != nil {
+		log.Fatalf("ListenAndServeTLS error: %v", err)
+	}
+	
+	
+
+	
 }
+
+
+/*
+func betterProto(w http.ResponseWriter, req *http.Request) {
+	
+	println(req.URL.Path+"\n") 
+	http.Redirect(w, req, "https://localhost:10443/"+req.URL.Path, http.StatusMovedPermanently)
+
+}*/
+
 
 func startHandler (w http.ResponseWriter, r *http.Request){
 
