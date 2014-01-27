@@ -7,6 +7,8 @@ import(
 	"regexp"
 	"github.com/russross/blackfriday"
 	"log"
+	"encoding/json"
+	"time"
 	)
 
 var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html"))
@@ -15,45 +17,57 @@ var invalidTitle = regexp.MustCompile("^$")
 
 type Page struct{
 	Title string
-	Body [] byte
+	Body string
 	DisplayBody template.HTML
+	Information string
 }
 
 func (p *Page) save() error {
 	filename := "./articles/" + p.Title
-	return ioutil.WriteFile(filename, p.Body, 0600)
+	 out , err := json.Marshal(p)
+	 if err != nil {
+		return  err
+	}
+	return ioutil.WriteFile(filename, out, 0600)
 }
 
 func loadPage (title string) (*Page, error) {
-	var body []byte 
-	var err error
+	var body string 
+	
 	var dBody template.HTML
+	var information string
+	//var dTemp template.HTML
 	if title == "start"{
-		files, erro := ioutil.ReadDir("./articles/") 
-		err = erro
+		files,_ := ioutil.ReadDir("./articles/") 
+		
 		dBody = "Welcome! Have a look at the existing pages below or create a new one.<br><br>"
 		for _, f := range files {
 			HTMLAttr := "<li><a href= /view/"+f.Name() + ">" + f.Name() + "</a></li>"
 			dBody += template.HTML(HTMLAttr)
 		}
+		
 	}else{
 		filename :="./articles/" + title
-		body,err = ioutil.ReadFile(filename)
-		dBody = template.HTML(blackfriday.MarkdownBasic(body))
-	}
-	if err != nil {
+		bodie,err := ioutil.ReadFile(filename)
+		if err != nil {
 		return nil, err
 	}
-	return &Page{Title: title, Body: body , DisplayBody: dBody}, nil
+	
+		var in map[string]interface{}
+		json.Unmarshal(bodie, &in )
+		fmt.Println(in)
+		body = in["Body"].(string)
+		dBody = template.HTML(in["DisplayBody"].(string))
+		information = in["Information"].(string)
+
+	}
+	
+	
+	return &Page{Title: title, Body: body , DisplayBody: dBody, Information: information}, nil
 }
 
 func main (){
-	//go http.ListenAndServeTLS(":10443", "./static/cert.pem","./static/key.pem", nil)
-	//http.ListenAndServe(":8080", http.HandlerFunc(betterProto))
-	/*if err := http.ListenAndServe(":8080", http.HandlerFunc(betterProto));
-		err != nil {
-		log.Fatalf("ListenAndServe error: %v", err)
-	}*/
+
 	
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
@@ -68,15 +82,6 @@ func main (){
 
 	
 }
-
-
-/*
-func betterProto(w http.ResponseWriter, req *http.Request) {
-	
-	println(req.URL.Path+"\n") 
-	http.Redirect(w, req, "https://localhost:10443/"+req.URL.Path, http.StatusMovedPermanently)
-
-}*/
 
 
 func startHandler (w http.ResponseWriter, r *http.Request){
@@ -123,7 +128,11 @@ func renderTemplate (w http.ResponseWriter, tmpl string, p *Page){
 
 func saveHandler (w http.ResponseWriter, r *http.Request, title string){
 	body := r.FormValue("body")
-	p := &Page{Title: title, Body: []byte(body)}
+	dBody := template.HTML(blackfriday.MarkdownBasic([]byte(body)))
+	const layout = "Jan 2, 2006 at 3:04pm (CET)"
+	t := time.Now()
+	information := "Aktualisiert:"+ t.Format(layout)
+	p := &Page{Title: title, Body: body, DisplayBody: dBody, Information: information}
 	err := p.save()
 	if err != nil{
 		http.Error(w, err.Error(), http.StatusInternalServerError)
