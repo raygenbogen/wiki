@@ -10,9 +10,11 @@ import (
 	"net/http"
 	"regexp"
 	"time"
+	"io"
+	"os"
 )
 
-var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html"))
+var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html", "./static/upload.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 var invalidTitle = regexp.MustCompile("^$")
 
@@ -71,7 +73,9 @@ func main() {
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
+	http.HandleFunc("/upload/", uploadHandler )
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+	http.Handle("/data/", http.StripPrefix("/data/", http.FileServer(http.Dir("./data"))))
 	http.HandleFunc("/", makeRedirectHandler("/view/start"))
 	if err := http.ListenAndServeTLS(":10443", "./static/certificate.pem", "./static/key.pem", nil); err != nil {
 		log.Fatalf("ListenAndServeTLS error: %v", err)
@@ -134,6 +138,71 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	}
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
+
+func renderUpload(w http.ResponseWriter, tmpl string, data interface{}) {
+	templates.ExecuteTemplate(w, "upload.html", data)
+}
+func uploadHandler( w http.ResponseWriter, r *http.Request) {
+	err  := templates.ExecuteTemplate(w, "upload.html", nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	switch r.Method {
+	//GET displays the upload form.
+	case "GET":
+		renderUpload(w, "upload", nil)
+ 
+	//POST takes the uploaded file(s) and saves it to disk.
+	case "POST":
+		//parse the multipart form in the request
+		err := r.ParseMultipartForm(100000)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+ 
+		//get a ref to the parsed multipart form
+		m := r.MultipartForm
+ 
+		//get the *fileheaders
+		files := m.File["myfiles"]
+		for i, _ := range files {
+			//for each fileheader, get a handle to the actual file
+			file, err := files[i].Open()
+			defer file.Close()
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			//create destination file making sure the path is writeable.
+			dst, err := os.Create("/data/upload/" + files[i].Filename)
+			defer dst.Close()
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			//copy the uploaded file to the destination file
+			if _, err := io.Copy(dst, file); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+ 
+		}
+		//display success message.
+		renderUpload(w, "upload", "Upload successful.")
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+	
+
+
+
+
+
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
