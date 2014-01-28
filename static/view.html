@@ -7,15 +7,16 @@
 
 <title>{{.Title}}</title>
 <link rel="stylesheet" href ="/static/css/bootstrap.css">
+
 </head>
 
 <body>
 <ul class="nav nav-tabs">
   <li><a href="/view/start">Home</a></li>
   <li><a href="/edit/{{.Title}}">Edit this Page!</a></li>
+  <li class = pull-right><a href="">{{.Information}}</a></li>
  </ul>
 <div>{{.DisplayBody}}</div>
-<div>{{.Information}}</div>
 </body>
 
 </html>
