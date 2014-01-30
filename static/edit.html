@@ -9,14 +9,15 @@
 	<body>
 	<ul class="nav nav-tabs">
   		<li><a href="/view/{{.Title}}">Cancel</a></li>
-  		<li><a href="/upload/">Upload a file</a></li>
   	</ul>
   	<h1>{{.Title}}</h1>
 	<div>{{.DisplayBody}}</div>
 	<form action="/save/{{.Title}}" method="POST">
 		<div><textarea name="body" style="width: 100%; min-height: 20em ;">{{printf "%s" .Body}}</textarea></div>
 		<div><input type="submit" value="Save"></div>
-</form>
+		<iframe  width="100%" frameborder="0" src="/upload/"></iframe>
+	</form>
+
 
 	</body>	
 </html>

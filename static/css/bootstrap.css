@@ -233,6 +233,7 @@ table {
   }
   .navbar {
     display: none;
+
   }
   .table td,
   .table th {
@@ -268,7 +269,7 @@ body {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 14px;
   line-height: 1.428571429;
-  color: #333333;
+  color: #000000;
   background-color: #ffffff;
 }
 input,
@@ -280,12 +281,12 @@ textarea {
   line-height: inherit;
 }
 a {
-  color: #428bca;
+  color: #000000;
   text-decoration: none;
 }
 a:hover,
 a:focus {
-  color: #2a6496;
+  color: #DAE224;
   text-decoration: underline;
 }
 a:focus {
@@ -3226,6 +3227,7 @@ textarea.input-group-sm > .input-group-btn > .btn {
   margin-bottom: 0;
   padding-left: 0;
   list-style: none;
+  background-color: rgb(50, 84, 156);
 }
 .nav:before,
 .nav:after {
@@ -3255,7 +3257,7 @@ textarea.input-group-sm > .input-group-btn > .btn {
 .nav > li > a:hover,
 .nav > li > a:focus {
   text-decoration: none;
-  background-color: #eeeeee;
+  background-color: #28247c;
 }
 .nav > li.disabled > a {
   color: #999999;
