@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html", "./static/upload.html", "./static/fileserver.html"))
+var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html", "./static/upload.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 var validType = regexp.MustCompile("^.*.(gif|jpeg|jpg)$")
 var hashedTime string
