@@ -18,7 +18,7 @@ import (
 
 var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html", "./static/upload.html", "./static/fileserver.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
-var invalidTitle = regexp.MustCompile("^$")
+var validType = regexp.MustCompile("^.*.(gif|jpeg|jpg)$")
 var hashedTime string
 
 type Page struct {
@@ -42,7 +42,7 @@ func loadPage(title string) (*Page, error) {
 
 	var dBody template.HTML
 	var information string
-	
+
 	if title == "start" {
 		files, _ := ioutil.ReadDir("./articles/")
 
@@ -146,9 +146,10 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 func renderUpload(w http.ResponseWriter, tmpl string, data interface{}) {
 	templates.ExecuteTemplate(w, "upload.html", data)
 }
+
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-	
+
 	case "GET":
 		renderUpload(w, "upload", nil)
 		fmt.Println("getting stuff")
@@ -171,7 +172,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		hashedTime = hex.EncodeToString(h.Sum([]byte(hashedTime)))
 		fmt.Println(hashedTime)
 		os.Mkdir("data/upload/"+hashedTime+"/", 0700)
-
+		
 		for {
 			fmt.Println("uploading parts of file")
 			part, err := reader.NextPart()
@@ -181,6 +182,12 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 			if part.FileName() == "" {
 				continue
+			}
+			m:=validType.FindStringSubmatch(part.FileName())
+			if m == nil {
+				fmt.Println("error much?")
+				continue
+
 			}
 			fmt.Println("actually writing stuff")
 			dst, err := os.Create("data/upload/" + hashedTime + "/" + part.FileName())
@@ -198,28 +205,13 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+		
+			
+			http.Redirect(w, r, "/data/upload/"+hashedTime, http.StatusFound)
 
-		fmt.Println("finished the loop")
-
-		http.Redirect(w, r, "/data/upload/"+hashedTime, http.StatusFound)
 		
 	}
 }
-
-
-/*func dataHandler (w http.ResponseWriter, r *http.Request){
-	var dBody template.HTML
-	files, _ := ioutil.ReadDir("./data/upload/"+hashedTime +"/")
-	fmt.Println(files)
-
-	dBody = "You successfully uploaded following files!<br><br>"
-		for _, f := range files {
-			HTMLAttr := "<li><a href= /data/upload/" + hashedTime + f.Name() + ">" + f.Name() + "</a></li>"
-			dBody += template.HTML(HTMLAttr)
-		}
-	templates.ExecuteTemplate(w, "fileserver.html", nil)
-	fmt.Println("template should be there")
-}*/
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
