@@ -12,8 +12,8 @@
   	</ul>
   	<h1>{{.Title}}</h1>
 	<div>{{.DisplayBody}}</div>
-	<form action="/save/{{.Title}}" method="POST">
-		<div><textarea name="body" style="width: 100%; min-height: 20em ;">{{printf "%s" .Body}}</textarea></div>
+	<form action="/save/{{.Title}}" method="POST" >
+		<div><textarea name="body" autofocus style="width: 100%; min-height: 20em ;">{{printf "%s" .Body}}</textarea></div>
 		<div><input type="submit" value="Save"></div>
 		<iframe  width="100%" frameborder="0" src="/upload/"></iframe>
 	</form>
