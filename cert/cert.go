@@ -1,4 +1,5 @@
 package cert
+
 // Copyright 2009 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -69,7 +70,10 @@ func Start() {
 	template := x509.Certificate{
 		SerialNumber: new(big.Int).SetInt64(0),
 		Subject: pkix.Name{
-			Organization: []string{"Acme Co"},
+			Country: []string{"DE"},
+			Province: []string{"Saxony"},
+			CommonName: string("tinymantico.re"),
+
 		},
 		NotBefore: notBefore,
 		NotAfter:  notAfter,

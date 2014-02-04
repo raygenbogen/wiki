@@ -1,27 +1,23 @@
 package main
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/russross/blackfriday"
+	"gowiki/cert"
+	"gowiki/upload"
 	"html/template"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
 	"time"
-	"gowiki/cert"
-)
 
+)
 
 var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html", "./static/upload.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
-var validType = regexp.MustCompile("^.*.(gif|jpeg|jpg)$")
-var hashedTime string
 
 type Page struct {
 	Title       string
@@ -74,17 +70,16 @@ func loadPage(title string) (*Page, error) {
 }
 
 func main() {
-	if _,certError := os.Stat("static/cert.pem");os.IsNotExist(certError){
+	if _, certError := os.Stat("static/cert.pem"); os.IsNotExist(certError) {
 		cert.Start()
 	}
-	if _,keyError := os.Stat("static/key.pem");os.IsNotExist(keyError){
+	if _, keyError := os.Stat("static/key.pem"); os.IsNotExist(keyError) {
 		cert.Start()
 	}
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
-	//http.HandleFunc("/data/upload/", dataHandler)
-	http.HandleFunc("/upload/", uploadHandler)
+	http.HandleFunc("/upload/", upload.UploadHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 	http.Handle("/data/", http.StripPrefix("/data/", http.FileServer(http.Dir("./data/"))))
 	http.HandleFunc("/", makeRedirectHandler("/view/start"))
@@ -148,76 +143,6 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 		return
 	}
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
-}
-
-func renderUpload(w http.ResponseWriter, tmpl string, data interface{}) {
-	templates.ExecuteTemplate(w, "upload.html", data)
-}
-
-func uploadHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-
-	case "GET":
-		renderUpload(w, "upload", nil)
-		fmt.Println("getting stuff")
-
-	case "POST":
-
-		fmt.Println("saving files to disk")
-		reader, err := r.MultipartReader()
-		if err != nil {
-
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		h := md5.New()
-		const layout = "2006-01-02 15:04:05"
-		t := time.Now()
-
-		hashedTime = t.Format(layout)
-		fmt.Println(hashedTime)
-		hashedTime = hex.EncodeToString(h.Sum([]byte(hashedTime)))
-		fmt.Println(hashedTime)
-		os.Mkdir("data/upload/"+hashedTime+"/", 0700)
-		
-		for {
-			fmt.Println("uploading parts of file")
-			part, err := reader.NextPart()
-			if err == io.EOF {
-				break
-			}
-
-			if part.FileName() == "" {
-				continue
-			}
-			m:=validType.FindStringSubmatch(part.FileName())
-			if m == nil {
-				fmt.Println("error much?")
-				continue
-
-			}
-			fmt.Println("actually writing stuff")
-			dst, err := os.Create("data/upload/" + hashedTime + "/" + part.FileName())
-			defer dst.Close()
-
-			if err != nil {
-				fmt.Println("error at writing")
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			if _, err := io.Copy(dst, part); err != nil {
-				fmt.Println("error while copying")
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-		
-			
-			http.Redirect(w, r, "/data/upload/"+hashedTime, http.StatusFound)
-
-		
-	}
 }
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
