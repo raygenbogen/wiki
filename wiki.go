@@ -14,7 +14,9 @@ import (
 	"os"
 	"regexp"
 	"time"
+	"gowiki/cert"
 )
+
 
 var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html", "./static/upload.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
@@ -72,7 +74,12 @@ func loadPage(title string) (*Page, error) {
 }
 
 func main() {
-
+	if _,certError := os.Stat("static/cert.pem");os.IsNotExist(certError){
+		cert.Start()
+	}
+	if _,keyError := os.Stat("static/key.pem");os.IsNotExist(keyError){
+		cert.Start()
+	}
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
@@ -81,7 +88,7 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 	http.Handle("/data/", http.StripPrefix("/data/", http.FileServer(http.Dir("./data/"))))
 	http.HandleFunc("/", makeRedirectHandler("/view/start"))
-	if err := http.ListenAndServeTLS(":10443", "./static/certificate.pem", "./static/key.pem", nil); err != nil {
+	if err := http.ListenAndServeTLS(":10443", "./static/cert.pem", "./static/key.pem", nil); err != nil {
 		log.Fatalf("ListenAndServeTLS error: %v", err)
 	}
 
