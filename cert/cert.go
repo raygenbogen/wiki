@@ -70,10 +70,9 @@ func Start() {
 	template := x509.Certificate{
 		SerialNumber: new(big.Int).SetInt64(0),
 		Subject: pkix.Name{
-			Country: []string{"DE"},
-			Province: []string{"Saxony"},
+			Country:    []string{"DE"},
+			Province:   []string{"Saxony"},
 			CommonName: string("tinymantico.re"),
-
 		},
 		NotBefore: notBefore,
 		NotAfter:  notAfter,
