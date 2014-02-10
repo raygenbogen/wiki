@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/russross/blackfriday"
-	"io/ioutil"
-	"net/http"
 	"html"
 	"html/template"
+	"io/ioutil"
+	"net/http"
+	"os"
 	"regexp"
 	"time"
 )
@@ -21,6 +22,7 @@ type Page struct {
 	DisplayBody template.HTML
 	Information string
 }
+type Version map[string]*Page
 
 func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -33,15 +35,6 @@ func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 			fn(w, r, m[2])
 		}
 	}
-}
-
-func (p *Page) save() error {
-	filename := "./articles/" + p.Title
-	out, err := json.Marshal(p)
-	if err != nil {
-		return err
-	}
-	return ioutil.WriteFile(filename, out, 0600)
 }
 
 func loadPage(title string) (*Page, error) {
@@ -60,18 +53,27 @@ func loadPage(title string) (*Page, error) {
 		}
 
 	} else {
+		var latestVersion string
 		filename := "./articles/" + title
-		bodie, err := ioutil.ReadFile(filename)
+		file, err := os.Open(filename)
+		versions := make(map[string]*Page)
+		defer file.Close()
 		if err != nil {
 			return nil, err
 		}
+		decoder := json.NewDecoder(file)
+		decoder.Decode(&versions)
+		var keys string
+		for k := range versions {
+			if k > keys {
+				keys = k
+			}
+		}
+		//sort.Strings(keys)
 
-		var in map[string]interface{}
-		json.Unmarshal(bodie, &in)
-		fmt.Println(in)
-		body = in["Body"].(string)
-		dBody = template.HTML(in["DisplayBody"].(string))
-		information = in["Information"].(string)
+		latestVersion = keys
+		page := versions[latestVersion]
+		return page, nil
 
 	}
 
@@ -114,16 +116,22 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 
 func SaveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	body := r.FormValue("body")
-	//body = html.EscapeString(body) 
+
 	dBody := template.HTML(blackfriday.MarkdownBasic([]byte(html.EscapeString(body))))
 	const layout = "2006-01-02 15:04:05"
 	t := time.Now()
 	information := "Aktualisiert:" + t.Format(layout)
+	versions := make(map[string]*Page)
+
 	p := &Page{Title: title, Body: body, DisplayBody: dBody, Information: information}
-	err := p.save()
+	versions[t.Format(layout)] = p
+	//v := Version(versions)
+
+	filename := "./articles/" + p.Title
+	out, err := json.Marshal(versions)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		fmt.Println("nicht jsoned")
 	}
+	ioutil.WriteFile(filename, out, 0600)
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
