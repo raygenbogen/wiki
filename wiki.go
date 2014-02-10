@@ -1,10 +1,10 @@
 package main
 
 import (
+	"gowiki/auth"
 	"gowiki/cert"
 	"gowiki/upload"
 	"gowiki/view"
-	"gowiki/auth"
 	"log"
 	"net/http"
 	"os"

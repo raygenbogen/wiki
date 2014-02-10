@@ -14,14 +14,15 @@
 <ul class="nav nav-tabs">
   <li><a href="/view/start">Home</a></li>
   <li><a href="/register"> create Account</a></li>
-  <li class = pull-right><a href="">{{.Information}}</a></li>
 </ul>
 <h1>Login</h1>
+<div class="message">{{.}}</div>
+<form action="/auth/" method="POST" >
 <div class="input-group">
-  <input type="text" class="form-control" placeholder="Username">
+  <input type="text" class="form-control" placeholder="Username" name="username">
 </div>
 <div class="input-group">
-  <input type="password" class="form-control" placeholder="Password">
+  <input type="password" class="form-control" placeholder="Password" name="password">
 </div>
 <div><input type="submit" value = Login></div>
 </body>
