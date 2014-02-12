@@ -7,6 +7,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
+	"fmt"
+	"encoding/hex"
+	"crypto/md5"
 )
 
 type Users struct {
@@ -46,12 +50,26 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 
 				} else {
 					//do cookie stuff
+					t := time.Now()
+					expiration := time.Now().AddDate(1,0,0)
+					fmt.Println(expiration)
+					//expirationexpiration.Year += 1
+					h := md5.New()
+					const layout = "2006-01-02 15:04:05"
+					hashedTime := t.Format(layout)
+					hashedStoredPassword := hex.EncodeToString(h.Sum([]byte(storedPassword)))
+					cookie := http.Cookie{Name: "User", Value: username, Path: "/", Expires: expiration}
+					cookie2 := http.Cookie{Name: hashedStoredPassword, Value: hashedTime, Path: "/" ,Expires:expiration}
+					http.SetCookie(w, &cookie)  
+					http.SetCookie(w, &cookie2)
+					fmt.Println(cookie.Value)
+					fmt.Println(cookie2.Name)
 					http.Redirect(w, r, "/view/start", http.StatusFound)
 				}
 
 			} else {
 				println("guessing not ok?")
-				http.Redirect(w, r, "/reg/", http.StatusFound)
+				http.Redirect(w, r, "/register/", http.StatusFound)
 			}
 		}
 
@@ -136,4 +154,53 @@ func clear(b []byte) {
 func Crypt(password []byte) ([]byte, error) {
 	defer clear(password)
 	return bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
+}
+
+func Chkauth(f http.HandlerFunc) http.HandlerFunc{
+	return func(w http.ResponseWriter, r *http.Request){
+		fmt.Println("do i even enter this function?")
+		if r == nil{
+			fmt.Println("there is no request.ficken")
+		}
+		cookie, err := r.Cookie("User")
+		
+		if err!= nil{
+			fmt.Println("i'm not reading anything cookielike")
+			fmt.Println(err)
+			http.Redirect(w,r, "/auth/",http.StatusFound)
+			return
+
+		}
+		fmt.Println(cookie.Name)
+		username := cookie.Value
+		file, err := os.OpenFile("./users/users", os.O_RDWR|os.O_CREATE, 0600)
+		if err != nil {
+			println("error opening the file")
+		}
+		defer file.Close()
+		decoder := json.NewDecoder(file)
+		users := make(map[string]string)
+		err = decoder.Decode(&users)
+
+		if err != nil {
+			println("error decoding")
+		} else {
+			if _, ok := users[username]; ok {
+				println("user is there")
+				storedPassword := users[username]
+				h := md5.New()
+				hashedStoredPassword := hex.EncodeToString(h.Sum([]byte(storedPassword)))
+				_, err := r.Cookie(hashedStoredPassword)
+				if err != nil{
+					println("no cookie found")
+					http.Redirect(w,r, "/auth/", http.StatusFound)
+					return
+				}
+			}
+		}
+
+
+		f(w,r)
+	}
+
 }

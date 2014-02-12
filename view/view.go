@@ -38,6 +38,7 @@ func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 }
 
 func loadPage(title string) (*Page, error) {
+	
 	var body string
 
 	var dBody template.HTML
@@ -81,6 +82,7 @@ func loadPage(title string) (*Page, error) {
 }
 
 func ViewHandler(w http.ResponseWriter, r *http.Request, title string) {
+	fmt.Println("entering viewhandler now")
 	p, err := loadPage(title)
 	if err != nil {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
@@ -134,4 +136,10 @@ func SaveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	}
 	ioutil.WriteFile(filename, out, 0600)
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
+}
+
+func HandlerToHandleFunc( handler http.Handler) http.HandlerFunc {
+	return func (w http.ResponseWriter ,r * http.Request){
+		handler.ServeHTTP(w,r)
+	}
 }
