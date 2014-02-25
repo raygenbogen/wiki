@@ -122,7 +122,12 @@ func SaveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	dBody := template.HTML(blackfriday.MarkdownBasic([]byte(html.EscapeString(body))))
 	const layout = "2006-01-02 15:04:05"
 	t := time.Now()
-	information := "Aktualisiert:" + t.Format(layout)
+	cookie, err := r.Cookie("User")
+	if err != nil{
+		// just do something
+	}
+	author := cookie.Value
+	information := "Aktualisiert:" + t.Format(layout) + " by " + string(author)
 	versions := make(map[string]*Page)
 
 	p := &Page{Title: title, Body: body, DisplayBody: dBody, Information: information}
