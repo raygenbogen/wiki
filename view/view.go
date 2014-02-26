@@ -13,8 +13,9 @@ import (
 	"time"
 )
 
-var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html", "./static/upload.html"))
-var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
+var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html"))
+var validPath = regexp.MustCompile("^/(edit|save|view|vers)/([a-zA-Z0-9]+)$")
+var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
 
 type Page struct {
 	Title       string
@@ -37,8 +38,28 @@ func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 	}
 }
 
+func MakeVersionHandler(fn func(http.ResponseWriter, *http.Request, string, *string)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		println(r.URL.Path)
+		m := versPath.FindStringSubmatch(r.URL.Path)
+		if m == nil {
+			n := validPath.FindStringSubmatch(r.URL.Path)
+			if n == nil {
+				http.Redirect(w, r, "/view/start", http.StatusFound)
+				println("weder valif noch irgendwas")
+				return
+			}
+			println("versionsübersicht")
+			fn(w, r, n[2], nil)
+		} else {
+			println("spezifische version")
+			fn(w, r, m[2], &m[3])
+		}
+	}
+}
+
 func loadPage(title string) (*Page, error) {
-	
+
 	var body string
 
 	var dBody template.HTML
@@ -49,7 +70,7 @@ func loadPage(title string) (*Page, error) {
 
 		dBody = "Welcome! Have a look at the existing pages below or create a new one.<br><br>"
 		for _, f := range files {
-			HTMLAttr := "<li><a href= /view/" + f.Name() + ">" + f.Name() + "</a></li>"
+			HTMLAttr := "<li><a href=\"/view/" + f.Name() + "\">" + f.Name() + "</a></li>"
 			dBody += template.HTML(HTMLAttr)
 		}
 
@@ -123,28 +144,63 @@ func SaveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	const layout = "2006-01-02 15:04:05"
 	t := time.Now()
 	cookie, err := r.Cookie("User")
-	if err != nil{
+	if err != nil {
 		// just do something
 	}
 	author := cookie.Value
 	information := "Aktualisiert:" + t.Format(layout) + " by " + string(author)
-	versions := make(map[string]*Page)
-
 	p := &Page{Title: title, Body: body, DisplayBody: dBody, Information: information}
-	versions[t.Format(layout)] = p
-	//v := Version(versions)
-
+	versions := make(map[string]*Page)
 	filename := "./articles/" + p.Title
+	file, err := os.Open(filename)
+	if err == nil {
+		defer file.Close()
+		decoder := json.NewDecoder(file)
+		decoder.Decode(&versions)
+
+	}
+	versions[t.Format(layout)] = p
 	out, err := json.Marshal(versions)
 	if err != nil {
 		fmt.Println("nicht jsoned")
 	}
+
+	//v := Version(versions)
+
 	ioutil.WriteFile(filename, out, 0600)
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 
-func HandlerToHandleFunc( handler http.Handler) http.HandlerFunc {
-	return func (w http.ResponseWriter ,r * http.Request){
-		handler.ServeHTTP(w,r)
+func HandlerToHandleFunc(handler http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		handler.ServeHTTP(w, r)
 	}
+}
+
+func VersionHandler(w http.ResponseWriter, r *http.Request, title string, version *string) {
+	var dBody template.HTML
+	filename := "./articles/" + title
+	file, err := os.Open(filename)
+	if err != nil {
+		return
+	}
+	versions := make(map[string]*Page)
+	defer file.Close()
+
+	decoder := json.NewDecoder(file)
+	decoder.Decode(&versions)
+	//var keys string
+	if version == nil {
+		for k := range versions {
+			HTMLAttr := "<li><a href=\"/vers/"+ title +"/"+ k + "\">" + k + "</a></li>"
+			dBody += template.HTML(HTMLAttr)
+		}
+		renderTemplate(w, "version", &Page{DisplayBody: dBody})
+	} else {
+		println(version)
+		page := versions[*version]
+		dBody := page.DisplayBody
+		renderTemplate(w, "version", &Page{DisplayBody: dBody})
+	}
+
 }

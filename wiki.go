@@ -22,6 +22,7 @@ func main() {
 	http.HandleFunc("/edit/", auth.Chkauth(view.MakeHandler(view.EditHandler)))
 	http.HandleFunc("/save/", auth.Chkauth(view.MakeHandler(view.SaveHandler)))
 	http.HandleFunc("/upload/", auth.Chkauth(upload.UploadHandler))
+	http.HandleFunc("/vers/", view.MakeVersionHandler(view.VersionHandler))
 	//http.HandleFunc("/reg/", auth.RegisterHandler)
 	http.HandleFunc("/register/", auth.RegisterHandler)
 	http.HandleFunc("/auth/", auth.Auth)
