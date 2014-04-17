@@ -13,12 +13,12 @@ import (
 	"crypto/md5"
 )
 
-type Users struct {
+/*type Users struct {
 	Username string
 	Password string
 	Approved string
 	Admin string
-}
+}*/
 
 var templates = template.Must(template.ParseFiles("./static/auth.html", "./static/register.html"))
 
@@ -31,20 +31,39 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 		username := r.FormValue("username")
 		enteredPassword := r.FormValue("password")
 		f, err := os.OpenFile("./users/users", os.O_RDWR|os.O_CREATE, 0600)
+		fi, erro := os.OpenFile("./users/approvedusers", os.O_RDWR|os.O_CREATE, 0600)
 		if err != nil {
 			println("error opening the file")
 		}
-		defer f.Close()
-		decoder := json.NewDecoder(f)
-		users := make(map[string]string)
-		err = decoder.Decode(&users)
+		if erro != nil {
 
+		}
+		defer f.Close()
+		defer fi.Close()
+		decoder := json.NewDecoder(f)
+		approvaldecoder := json.NewDecoder(fi)
+		users := make(map[string]string)
+		approvedusers := make(map[string]string)
+		err = decoder.Decode(&users)
+		erro = approvaldecoder.Decode(&approvedusers)
+		if erro != nil{
+
+		}
 		if err != nil {
 			println("error decoding")
 			http.Redirect(w,r, "/register", http.StatusFound)
 		} else {
 			if _, ok := users[username]; ok {
+
 				println("user is there")
+				if _, okay := approvedusers[username]; okay{
+					println("user is also in approvedusers")
+					stateofapproval := approvedusers[username]
+					if stateofapproval != "approved" {
+						println("not approved")
+						renderAuth(w, "auth.html", "You are not yet approved!")
+					}
+				}
 				storedPassword := users[username]
 				err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(enteredPassword))
 				if err != nil {
@@ -68,7 +87,9 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 					fmt.Println(cookie.Value)
 					fmt.Println(cookie2.Name)
 					http.Redirect(w, r, "/view/start", http.StatusFound)
+
 				}
+
 
 			} else {
 				println("guessing not ok?")
@@ -91,9 +112,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		username := r.FormValue("username")
 		password := r.FormValue("password")
- 		admin := "Admin"
- 		approved := "approved"
-		println(username)
+ 		println(username)
 		println(password)
 		if len(password) < 8 {
 			println("more letters")
@@ -103,6 +122,18 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 		//some error handling
 		f, err := os.OpenFile("./users/users", os.O_RDWR|os.O_CREATE, 0600)
+		fi, erro := os.OpenFile("./users/admins", os.O_RDWR|os.O_CREATE, 0600)
+		fil, er := os.OpenFile("./users/approvedusers", os.O_RDWR|os.O_CREATE, 0600)
+		if erro != nil{
+			println("no adminsFile")
+		}
+		if er != nil{
+
+		}
+
+		defer fil.Close()
+		defer fi.Close()
+
 		//some error handling
 		if err != nil {
 			println("where is this file everyone's talking about?")
@@ -111,8 +142,14 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		defer f.Close()
 		decoder := json.NewDecoder(f)
+		admindecoder := json.NewDecoder(fi)
+		approvaldecoder := json.NewDecoder(fil)
 		users := make(map[string]string)
+		admins := make (map[string]string)
+		approvedusers := make (map[string]string)
 		err = decoder.Decode(&users)
+		erro = admindecoder.Decode(&admins)
+		er = approvaldecoder.Decode(&approvedusers)
 		if err != nil {
 			println("error decoding")
 		} else {
@@ -127,19 +164,28 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 					//log.Fatal(err)
 				}
 				users[username] = string(cryptPassword)
-				users[admin] = "false"
-				users[approved] = "false"
+				admins[username] = "IsNotAdmin"
+				approvedusers[username] = "NotYetApproved"
 			}
 		}
+		jsonedadmins, er := json.Marshal(admins)
+		jsonedapprovals, erro := json.Marshal(approvedusers)
 		jsonedusers, err := json.Marshal(users)
 		println(string(jsonedusers))
 		if err != nil {
 			println("did we jsoned the users yet?")
 
 		}
+		if er != nil{
 
+		}
+		if erro != nil {
+
+		}
 		ioutil.WriteFile("./users/users", jsonedusers, 0600)
 		f.Close()
+		ioutil.WriteFile("./users/approvedusers", jsonedapprovals, 0600)
+		ioutil.WriteFile("./users/admins", jsonedadmins, 0600)
 		http.Redirect(w, r, "/auth/", http.StatusFound)
 	}
 
