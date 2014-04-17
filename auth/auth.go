@@ -16,6 +16,8 @@ import (
 type Users struct {
 	Username string
 	Password string
+	Approved string
+	Admin string
 }
 
 var templates = template.Must(template.ParseFiles("./static/auth.html", "./static/register.html"))
@@ -39,6 +41,7 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			println("error decoding")
+			http.Redirect(w,r, "/register", http.StatusFound)
 		} else {
 			if _, ok := users[username]; ok {
 				println("user is there")
@@ -88,7 +91,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		username := r.FormValue("username")
 		password := r.FormValue("password")
-
+ 		admin := "Admin"
+ 		approved := "approved"
 		println(username)
 		println(password)
 		if len(password) < 8 {
@@ -123,6 +127,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 					//log.Fatal(err)
 				}
 				users[username] = string(cryptPassword)
+				users[admin] = "false"
+				users[approved] = "false"
 			}
 		}
 		jsonedusers, err := json.Marshal(users)
@@ -184,6 +190,7 @@ func Chkauth(f http.HandlerFunc) http.HandlerFunc{
 
 		if err != nil {
 			println("error decoding")
+			http.Redirect(w,r,"/auth", http.StatusFound)
 		} else {
 			if _, ok := users[username]; ok {
 				println("user is there")
@@ -196,7 +203,10 @@ func Chkauth(f http.HandlerFunc) http.HandlerFunc{
 					http.Redirect(w,r, "/auth/", http.StatusFound)
 					return
 				}
-			}
+			}else {
+			println("no user found")
+			http.Redirect(w,r, "/auth", http.StatusFound)
+		}
 		}
 
 
