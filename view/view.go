@@ -11,9 +11,10 @@ import (
 	"os"
 	"regexp"
 	"time"
+	"sort"
 )
 
-var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html"))
+var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view|vers)/([a-zA-Z0-9]+)$")
 var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
 
@@ -190,17 +191,28 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 	decoder := json.NewDecoder(file)
 	decoder.Decode(&versions)
 	//var keys string
+	
 	if version == nil {
+		var olderVersions string
+		keys := make ([]string, 0, len(versions))
 		for k := range versions {
-			HTMLAttr := "<li><a href=\"/vers/"+ title +"/"+ k + "\">" + k + "</a></li>"
-			dBody += template.HTML(HTMLAttr)
+			keys = append(keys,k)
+			
+			
 		}
-		renderTemplate(w, "version", &Page{DisplayBody: dBody})
+		sort.Strings(keys)
+		for k := range keys {
+			HTMLAttr := "<li><a href=\"/vers/"+ title +"/"+ keys[k] + "\" target=\"versions\">" + keys[k] + "</a></li>"
+			println(keys[k])
+			olderVersions = HTMLAttr + olderVersions
+		}
+		dBody += template.HTML(olderVersions)
+		renderTemplate(w, "version", &Page{Title: title,DisplayBody: dBody})
 	} else {
 		println(version)
 		page := versions[*version]
 		dBody := page.DisplayBody
-		renderTemplate(w, "version", &Page{DisplayBody: dBody})
+		renderTemplate(w, "specificversion", &Page{Title: title ,DisplayBody: dBody})
 	}
 
 }

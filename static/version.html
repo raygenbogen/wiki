@@ -7,16 +7,24 @@
 
 <title>{{.Title}}</title>
 <link rel="stylesheet" href ="/static/css/bootstrap.css">
-
+<style type="text/css">
+#versions {float: right; overflow-y:hidden; width:85%; height: 90%; }
+</style>
 </head>
 
 <body>
 <ul class="nav nav-tabs">
   <li><a href="/view/start">Home</a></li>
+  <li><a href="/view/{{.Title}}">{{.Title}}</a></li>
   <li class = pull-right><a href="/vers/{{.Title}}">{{.Information}}</a></li>
 </ul>
-<h1>{{.Title}}</h1>
+<div id="versions">
+<iframe  height="" frameborder="0" id="versions"   ></iframe>
+</div>
+<p>
 <div>{{.DisplayBody}}</div>
+</p>
+
 </body>
 
 </html>

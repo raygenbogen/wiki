@@ -61,7 +61,7 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 					stateofapproval := approvedusers[username]
 					if stateofapproval != "approved" {
 						println("not approved")
-						renderAuth(w, "auth.html", "You are not yet approved!")
+						renderAuth(w, "auth.html", "You are not yet approved! Please contact one of the Administrators!")
 					}
 				}
 				storedPassword := users[username]
