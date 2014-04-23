@@ -14,9 +14,11 @@ import (
 	"sort"
 )
 
-var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html"))
-var validPath = regexp.MustCompile("^/(edit|save|view|vers)/([a-zA-Z0-9]+)$")
+var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html" ,"./static/users.html"))
+var validPath = regexp.MustCompile("^/(edit|save|view|vers|users)/([a-zA-Z0-9]+)$")
 var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
+var userPath = regexp.MustCompile("^/(users)(/)?$")
+
 
 type Page struct {
 	Title       string
@@ -43,19 +45,44 @@ func MakeVersionHandler(fn func(http.ResponseWriter, *http.Request, string, *str
 	return func(w http.ResponseWriter, r *http.Request) {
 		println(r.URL.Path)
 		m := versPath.FindStringSubmatch(r.URL.Path)
+		println(m)
 		if m == nil {
+			println(m)
 			n := validPath.FindStringSubmatch(r.URL.Path)
+			println(n)
 			if n == nil {
+				println(n)
 				http.Redirect(w, r, "/view/start", http.StatusFound)
-				println("weder valif noch irgendwas")
 				return
 			}
-			println("versionsübersicht")
+			// list all versions of an articles
 			fn(w, r, n[2], nil)
 		} else {
-			println("spezifische version")
+			// show specific version
 			fn(w, r, m[2], &m[3])
 		}
+	}
+}
+
+func MakeUserHandler( fn func(http.ResponseWriter, * http.Request, string)) http.HandlerFunc {
+	return func( w http.ResponseWriter, r *http.Request){
+		m := validPath.FindStringSubmatch(r.URL.Path)
+		println(r.URL.Path)
+		if m == nil {
+			println("not a valid path")
+			n := userPath.FindStringSubmatch(r.URL.Path)
+			if n == nil {
+				println("not even a users path")
+				println(n)
+				http.Redirect(w, r, "/users/", http.StatusFound)
+				return
+			}
+			fn (w, r, "")
+		} else {
+			fn (w, r, m[2])
+
+		}
+		
 	}
 }
 
@@ -215,4 +242,11 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 		renderTemplate(w, "specificversion", &Page{Title: title ,DisplayBody: dBody})
 	}
 
+}
+
+func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
+	println(" i made it")
+	println(user)
+	var dBody template.HTML
+	renderTemplate(w, "users", &Page{DisplayBody: dBody})
 }
