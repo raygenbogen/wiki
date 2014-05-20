@@ -14,7 +14,7 @@ import (
 	"sort"
 )
 
-var templates = template.Must(template.ParseFiles("./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html" ,"./static/users.html"))
+var templates = template.Must(template.ParseFiles("./static/startpage.html","./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html" ,"./static/users.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view|vers|users)/([a-zA-Z0-9]+)$")
 var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
 var userPath = regexp.MustCompile("^/(users)(/)?$")
@@ -92,13 +92,14 @@ func loadPage(title string) (*Page, error) {
 
 	var dBody template.HTML
 	var information string
+	println("last updated" )
+	println(information)
 
 	if title == "start" {
 		files, _ := ioutil.ReadDir("./articles/")
-
-		dBody = "Welcome! Have a look at the existing pages below or create a new one.<br><br>"
+		body = "Welcome! Have a look at the existing pages below or create a new one."
 		for _, f := range files {
-			HTMLAttr := "<li><a href=\"/view/" + f.Name() + "\">" + f.Name() + "</a></li>"
+			HTMLAttr := "<tr><td><a href=\"/view/" + f.Name() + "\">" + f.Name() + "</a></td><td><a href=\"/vers/" + f.Name() + "\">" + f.Name() + "</a></td></tr>"
 			dBody += template.HTML(HTMLAttr)
 		}
 
@@ -137,8 +138,11 @@ func ViewHandler(w http.ResponseWriter, r *http.Request, title string) {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 		return
 	}
-
-	renderTemplate(w, "view", p)
+	if title != "start"{
+		renderTemplate(w, "view", p)
+	}else{
+		renderTemplate(w, "startpage", p)
+	}
 }
 
 func MakeRedirectHandler(target string) http.HandlerFunc {
