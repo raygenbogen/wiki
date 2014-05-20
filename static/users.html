@@ -14,7 +14,25 @@
 <ul class="nav nav-tabs">
   <li><a href="/view/start">Home</a></li>
 </ul>
-<div>{{.DisplayBody}}</div>
+<div class="panel panel-default">
+  <!-- Default panel contents -->
+  <div class="panel-heading">Users</div>
+
+  <!-- Table -->
+  <table class="table table-bordered table-striped">
+   <thead>
+    <tr>
+  	 <th>Username</th>
+    </tr>
+   </thead>
+ 	<tbody> 
+  
+  {{.DisplayBody}}
+ 
+ 	</tbody>
+
+ </table>
+</div>
 </body>
 
 </html>

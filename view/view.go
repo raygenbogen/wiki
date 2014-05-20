@@ -245,8 +245,69 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 }
 
 func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
-	println(" i made it")
-	println(user)
 	var dBody template.HTML
-	renderTemplate(w, "users", &Page{DisplayBody: dBody})
+	
+	cookie, err := r.Cookie("User")
+	if err!= nil{
+		return
+	}
+	fmt.Println(cookie.Name)
+	username := cookie.Value
+	file, err := os.OpenFile("./users/users", os.O_RDWR|os.O_CREATE, 0600)
+	if err != nil {
+		println("error opening the file")
+	}
+	defer file.Close()
+	decoder := json.NewDecoder(file)
+	users := make(map[string]string)
+	err = decoder.Decode(&users)
+	adminfile, err :=os.OpenFile("./users/admins", os.O_RDWR| os.O_CREATE, 0600	)
+	if err != nil {
+		println("error opening the file")
+	}
+	defer adminfile.Close()
+	admindecoder := json.NewDecoder(adminfile)
+	admins := make(map[string]string)
+	err = admindecoder.Decode(&admins)
+	adminstatus := admins[username]
+	println(adminstatus)
+	var userlist string
+	if adminstatus == "IsAdmin" {
+	
+	keys := make ([]string, 0, len(users))
+		for k := range users {
+			keys = append(keys,k)
+			
+			
+		}
+		sort.Strings(keys)
+		for k := range keys {
+			HTMLAttr := "<li>keys[k] /li>"
+			
+			println(keys[k])
+			userlist = HTMLAttr + userlist
+		}
+		dBody += template.HTML(userlist)
+		renderTemplate(w, "users", &Page{DisplayBody: dBody})
+	}else{
+		keys := make ([]string, 0, len(users))
+		for k := range users {
+			keys = append(keys,k)
+			
+			
+		}
+		sort.Strings(keys)
+		for k := range keys {
+			HTMLAttr := "<tr><td>"+keys[k] +"</td></tr>"
+			
+			println(keys[k])
+			userlist = userlist + HTMLAttr
+		}
+		dBody += template.HTML(userlist)
+		renderTemplate(w, "users", &Page{DisplayBody: dBody})
+	}
+
+
+
+	//renderTemplate(w, "users", &Page{DisplayBody: dBody})
 }
