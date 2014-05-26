@@ -14,7 +14,7 @@ import (
 	"sort"
 )
 
-var templates = template.Must(template.ParseFiles("./static/startpage.html","./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html" ,"./static/users.html"))
+var templates = template.Must(template.ParseFiles("./static/startpage.html","./static/adminpage.html","./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html" ,"./static/users.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view|vers|users)/([a-zA-Z0-9]+)$")
 var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
 var userPath = regexp.MustCompile("^/(users)(/)?$")
@@ -277,6 +277,15 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 	println(adminstatus)
 	var userlist string
 	if adminstatus == "IsAdmin" {
+		approvalfile, err :=os.OpenFile("./users/approvedusers", os.O_RDWR| os.O_CREATE, 0600	)
+		if err != nil {
+			println("error opening the file")
+		}
+		defer approvalfile.Close()
+		approvaldecoder := json.NewDecoder(approvalfile)
+		approvedusers := make(map[string]string)
+		err = approvaldecoder.Decode(&approvedusers)
+		
 	
 	keys := make ([]string, 0, len(users))
 		for k := range users {
@@ -286,13 +295,14 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 		}
 		sort.Strings(keys)
 		for k := range keys {
-			HTMLAttr := "<li>keys[k] /li>"
+			approvalstatus := approvedusers[keys[k]]
+			HTMLAttr := "<tr><td>"+keys[k] +"</td><td>"+approvalstatus+"</td></tr>"
 			
 			println(keys[k])
 			userlist = HTMLAttr + userlist
 		}
 		dBody += template.HTML(userlist)
-		renderTemplate(w, "users", &Page{DisplayBody: dBody})
+		renderTemplate(w, "adminpage", &Page{DisplayBody: dBody})
 	}else{
 		keys := make ([]string, 0, len(users))
 		for k := range users {
@@ -302,6 +312,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 		}
 		sort.Strings(keys)
 		for k := range keys {
+
 			HTMLAttr := "<tr><td>"+keys[k] +"</td></tr>"
 			
 			println(keys[k])
