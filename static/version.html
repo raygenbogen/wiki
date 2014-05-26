@@ -4,11 +4,15 @@
 <html>
 
 <head>
-
+<script language="javascript" type="text/javascript">
+  function resizeIframe(obj) {
+    obj.style.height = obj.contentWindow.document.body.scrollHeight + 'px';
+  }
+</script>
 <title>{{.Title}}</title>
 <link rel="stylesheet" href ="/static/css/bootstrap.css">
 <style type="text/css">
-#versions {float: right; overflow-y:hidden; width:85%; height: 90%; }
+#versions {float: right; overflow-y:hidden; height: 90%; width:85%; frameborder:0; }
 </style>
 </head>
 
@@ -18,8 +22,8 @@
   <li><a href="/view/{{.Title}}">{{.Title}}</a></li>
   <li class = pull-right><a href="/vers/{{.Title}}">{{.Information}}</a></li>
 </ul>
-<div id="versions">
-<iframe  height="" frameborder="0" id="versions"   ></iframe>
+<div id="versions" >
+<iframe name="versions" id=iframe onload="javascript:resizeIframe(this)" width="100%" height="90%" frameborder="0"; ></iframe>
 </div>
 <p>
 <div>{{.DisplayBody}}</div>
