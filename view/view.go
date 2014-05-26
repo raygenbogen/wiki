@@ -10,15 +10,14 @@ import (
 	"net/http"
 	"os"
 	"regexp"
-	"time"
 	"sort"
+	"time"
 )
 
-var templates = template.Must(template.ParseFiles("./static/startpage.html","./static/adminpage.html","./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html" ,"./static/users.html"))
+var templates = template.Must(template.ParseFiles("./static/startpage.html", "./static/adminpage.html", "./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html", "./static/users.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view|vers|users)/([a-zA-Z0-9]+)$")
 var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
 var userPath = regexp.MustCompile("^/(users)(/)?$")
-
 
 type Page struct {
 	Title       string
@@ -64,8 +63,8 @@ func MakeVersionHandler(fn func(http.ResponseWriter, *http.Request, string, *str
 	}
 }
 
-func MakeUserHandler( fn func(http.ResponseWriter, * http.Request, string)) http.HandlerFunc {
-	return func( w http.ResponseWriter, r *http.Request){
+func MakeUserHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		m := validPath.FindStringSubmatch(r.URL.Path)
 		println(r.URL.Path)
 		if m == nil {
@@ -77,12 +76,12 @@ func MakeUserHandler( fn func(http.ResponseWriter, * http.Request, string)) http
 				http.Redirect(w, r, "/users/", http.StatusFound)
 				return
 			}
-			fn (w, r, "")
+			fn(w, r, "")
 		} else {
-			fn (w, r, m[2])
+			fn(w, r, m[2])
 
 		}
-		
+
 	}
 }
 
@@ -92,7 +91,7 @@ func loadPage(title string) (*Page, error) {
 
 	var dBody template.HTML
 	var information string
-	println("last updated" )
+	println("last updated")
 	println(information)
 
 	if title == "start" {
@@ -138,9 +137,9 @@ func ViewHandler(w http.ResponseWriter, r *http.Request, title string) {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 		return
 	}
-	if title != "start"{
+	if title != "start" {
 		renderTemplate(w, "view", p)
-	}else{
+	} else {
 		renderTemplate(w, "startpage", p)
 	}
 }
@@ -222,37 +221,36 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 	decoder := json.NewDecoder(file)
 	decoder.Decode(&versions)
 	//var keys string
-	
+
 	if version == nil {
 		var olderVersions string
-		keys := make ([]string, 0, len(versions))
+		keys := make([]string, 0, len(versions))
 		for k := range versions {
-			keys = append(keys,k)
-			
-			
+			keys = append(keys, k)
+
 		}
 		sort.Strings(keys)
 		for k := range keys {
-			HTMLAttr := "<li><a href=\"/vers/"+ title +"/"+ keys[k] + "\" target=\"versions\">" + keys[k] + "</a></li>"
+			HTMLAttr := "<li><a href=\"/vers/" + title + "/" + keys[k] + "\" target=\"versions\">" + keys[k] + "</a></li>"
 			println(keys[k])
 			olderVersions = HTMLAttr + olderVersions
 		}
 		dBody += template.HTML(olderVersions)
-		renderTemplate(w, "version", &Page{Title: title,DisplayBody: dBody})
+		renderTemplate(w, "version", &Page{Title: title, DisplayBody: dBody})
 	} else {
 		println(version)
 		page := versions[*version]
 		dBody := page.DisplayBody
-		renderTemplate(w, "specificversion", &Page{Title: title ,DisplayBody: dBody})
+		renderTemplate(w, "specificversion", &Page{Title: title, DisplayBody: dBody})
 	}
 
 }
 
 func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 	var dBody template.HTML
-	
+
 	cookie, err := r.Cookie("User")
-	if err!= nil{
+	if err != nil {
 		return
 	}
 	fmt.Println(cookie.Name)
@@ -265,7 +263,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 	decoder := json.NewDecoder(file)
 	users := make(map[string]string)
 	err = decoder.Decode(&users)
-	adminfile, err :=os.OpenFile("./users/admins", os.O_RDWR| os.O_CREATE, 0600	)
+	adminfile, err := os.OpenFile("./users/admins", os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		println("error opening the file")
 	}
@@ -277,7 +275,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 	println(adminstatus)
 	var userlist string
 	if adminstatus == "IsAdmin" {
-		approvalfile, err :=os.OpenFile("./users/approvedusers", os.O_RDWR| os.O_CREATE, 0600	)
+		approvalfile, err := os.OpenFile("./users/approvedusers", os.O_RDWR|os.O_CREATE, 0600)
 		if err != nil {
 			println("error opening the file")
 		}
@@ -285,44 +283,39 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 		approvaldecoder := json.NewDecoder(approvalfile)
 		approvedusers := make(map[string]string)
 		err = approvaldecoder.Decode(&approvedusers)
-		
-	
-	keys := make ([]string, 0, len(users))
+
+		keys := make([]string, 0, len(users))
 		for k := range users {
-			keys = append(keys,k)
-			
-			
+			keys = append(keys, k)
+
 		}
 		sort.Strings(keys)
 		for k := range keys {
 			approvalstatus := approvedusers[keys[k]]
-			HTMLAttr := "<tr><td>"+keys[k] +"</td><td>"+approvalstatus+"</td></tr>"
-			
+			HTMLAttr := "<tr><td>" + keys[k] + "</td><td>" + approvalstatus + "</td></tr>"
+
 			println(keys[k])
 			userlist = HTMLAttr + userlist
 		}
 		dBody += template.HTML(userlist)
 		renderTemplate(w, "adminpage", &Page{DisplayBody: dBody})
-	}else{
-		keys := make ([]string, 0, len(users))
+	} else {
+		keys := make([]string, 0, len(users))
 		for k := range users {
-			keys = append(keys,k)
-			
-			
+			keys = append(keys, k)
+
 		}
 		sort.Strings(keys)
 		for k := range keys {
 
-			HTMLAttr := "<tr><td>"+keys[k] +"</td></tr>"
-			
+			HTMLAttr := "<tr><td>" + keys[k] + "</td></tr>"
+
 			println(keys[k])
 			userlist = userlist + HTMLAttr
 		}
 		dBody += template.HTML(userlist)
 		renderTemplate(w, "users", &Page{DisplayBody: dBody})
 	}
-
-
 
 	//renderTemplate(w, "users", &Page{DisplayBody: dBody})
 }
