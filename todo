@@ -1,3 +1,4 @@
-* versioning
-* userlogin\done cookies still pending
 * logo (fisch)
+* reorder userslist
+* add approvalcheck in chkauth in case someone forged a cookie
+* toogle stateofapproval and adminstatus with buttons and shit
