@@ -12,13 +12,15 @@ import (
 	"regexp"
 	"sort"
 	"time"
+	"strings"
 )
 
 var templates = template.Must(template.ParseFiles("./static/files.html", "./static/startpage.html", "./static/adminpage.html", "./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html", "./static/users.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view|vers|users)/([a-zA-Z0-9]+)$")
 var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
 var userPath = regexp.MustCompile("^/(users)(/)?$")
-var filePath = regexp.MustCompile("^/(data/fileserver)(/)?$")
+var filePath = regexp.MustCompile("^/(video)/(?)")
+var videoPath = regexp.MustCompile("^/(video)/(.+)[.](mkv|avi|webm|mp4|mpg|mpeg|wmv|ogg|mp3|flac)")
 
 type Page struct {
 	Title       string
@@ -324,10 +326,9 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 func MakeFileHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := filePath.FindStringSubmatch(r.URL.Path)
-		println(r.URL.Path)
 		if m == nil {
 			println("not a valid path")
-			
+			return
 			}
 			
 			fn(w, r, r.URL.Path)
@@ -339,12 +340,29 @@ func MakeFileHandler(fn func(http.ResponseWriter, *http.Request, string)) http.H
 func FileHandler (w http.ResponseWriter, r *http.Request, path string){
 	println("i am here")
 	println(path)
+	replacer := strings.NewReplacer("video", "data/fileserver")
+	newpath := replacer.Replace(path)
+	println(newpath)
 	var dBody template.HTML
-	files, _ := ioutil.ReadDir("." + path)
-		
+  	m := videoPath.FindStringSubmatch(path)
+	if m == nil{ 
+		println("not a video, but a directory")
+		files, _ := ioutil.ReadDir("." + newpath)
+		title := " Files and Directories"
 		for _, f := range files {
-			HTMLAttr := "<tr><td><a href="+path +"/"+ f.Name() + ">" + f.Name() + "</a></td></tr>"
+			
+			println(f.Name())
+			HTMLAttr := "<tr><td><a href=\""+path +"/"+ f.Name() + "\">" + f.Name() + "</a></td></tr>"
 			dBody += template.HTML(HTMLAttr)
 		}
-		renderTemplate(w, "files", &Page{DisplayBody: dBody})
+		renderTemplate(w, "files", &Page{Title: title , DisplayBody: dBody})
+   	}else {
+   		println("this is a video")
+   		title := "Videoplayer"
+   		HTMLAttr :="<tr><td><video width=\"80%\" height=\"80%\" controls><source src="+newpath+">Your browser does not support the video tag.</video></td></tr>"
+		dBody = template.HTML(HTMLAttr)
+		renderTemplate(w, "files", &Page{Title: title , DisplayBody: dBody})
+	}
+   	
+
 }
