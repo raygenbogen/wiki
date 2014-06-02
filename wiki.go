@@ -27,6 +27,7 @@ func main() {
 	//http.HandleFunc("/reg/", auth.RegisterHandler)
 	http.HandleFunc("/register/", auth.RegisterHandler)
 	http.HandleFunc("/auth/", auth.Auth)
+	http.Handle("/static/css/", view.HandlerToHandleFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/")))))
 	http.Handle("/static/", auth.Chkauth(view.HandlerToHandleFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))))
 	http.Handle("/data/", auth.Chkauth(view.HandlerToHandleFunc(http.StripPrefix("/data/", http.FileServer(http.Dir("./data/"))))))
 	http.HandleFunc("/", view.MakeRedirectHandler("/view/start"))

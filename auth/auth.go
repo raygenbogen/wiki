@@ -249,10 +249,24 @@ func Chkauth(f http.HandlerFunc) http.HandlerFunc{
 					http.Redirect(w,r, "/auth/", http.StatusFound)
 					return
 				}
-			}else {
-			println("no user found")
-			http.Redirect(w,r, "/auth", http.StatusFound)
-		}
+				approvalfile, err := os.OpenFile("./users/approvedusers", os.O_RDWR|os.O_CREATE, 0600)
+				if err != nil {
+				println("error opening the file")
+				}
+				defer approvalfile.Close()
+				approvaldecoder := json.NewDecoder(approvalfile)
+				approvedusers := make(map[string]string)
+				err = approvaldecoder.Decode(&approvedusers)
+				approvalstatus := approvedusers[username]
+				println(approvalstatus)
+				if approvalstatus != "approved"{
+					http.Redirect(w,r, "/auth", http.StatusFound)
+				}
+
+				}else {
+				println("no user found")
+				http.Redirect(w,r, "/auth", http.StatusFound)
+			}
 		}
 
 
