@@ -14,10 +14,11 @@ import (
 	"time"
 )
 
-var templates = template.Must(template.ParseFiles("./static/startpage.html", "./static/adminpage.html", "./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html", "./static/users.html"))
+var templates = template.Must(template.ParseFiles("./static/files.html", "./static/startpage.html", "./static/adminpage.html", "./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html", "./static/users.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view|vers|users)/([a-zA-Z0-9]+)$")
 var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
 var userPath = regexp.MustCompile("^/(users)(/)?$")
+var filePath = regexp.MustCompile("^/(data/fileserver)(/)?$")
 
 type Page struct {
 	Title       string
@@ -318,4 +319,32 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 	}
 
 	//renderTemplate(w, "users", &Page{DisplayBody: dBody})
+}
+
+func MakeFileHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		m := filePath.FindStringSubmatch(r.URL.Path)
+		println(r.URL.Path)
+		if m == nil {
+			println("not a valid path")
+			
+			}
+			
+			fn(w, r, r.URL.Path)
+		
+
+	}
+}
+
+func FileHandler (w http.ResponseWriter, r *http.Request, path string){
+	println("i am here")
+	println(path)
+	var dBody template.HTML
+	files, _ := ioutil.ReadDir("." + path)
+		
+		for _, f := range files {
+			HTMLAttr := "<tr><td><a href="+path +"/"+ f.Name() + ">" + f.Name() + "</a></td></tr>"
+			dBody += template.HTML(HTMLAttr)
+		}
+		renderTemplate(w, "files", &Page{DisplayBody: dBody})
 }

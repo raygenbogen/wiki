@@ -24,11 +24,13 @@ func main() {
 	http.HandleFunc("/upload/", auth.Chkauth(upload.UploadHandler))
 	http.HandleFunc("/vers/", auth.Chkauth(view.MakeVersionHandler(view.VersionHandler)))
 	http.HandleFunc("/users/", auth.Chkauth(view.MakeUserHandler(view.UserHandler)))
+	http.HandleFunc("/data/fileserver/", auth.Chkauth(view.MakeFileHandler(view.FileHandler)))
 	//http.HandleFunc("/reg/", auth.RegisterHandler)
 	http.HandleFunc("/register/", auth.RegisterHandler)
 	http.HandleFunc("/auth/", auth.Auth)
 	http.Handle("/static/css/", view.HandlerToHandleFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/")))))
 	http.Handle("/static/", auth.Chkauth(view.HandlerToHandleFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))))
+	//http.Handle("/data/fileserver/", auth.Chkauth(view.HandlerToHandleFunc(http.StripPrefix("/data/",http.FileServer(http.Dir("./data/")))))
 	http.Handle("/data/", auth.Chkauth(view.HandlerToHandleFunc(http.StripPrefix("/data/", http.FileServer(http.Dir("./data/"))))))
 	http.HandleFunc("/", view.MakeRedirectHandler("/view/start"))
 	if err := http.ListenAndServeTLS(":10443", "./static/cert.pem", "./static/key.pem", nil); err != nil {
