@@ -1,0 +1,36 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>{{.Title}}</title>
+<link rel="stylesheet" href ="/static/css/bootstrap.css">
+<script src="http://popcornjs.org/code/dist/popcorn-complete.js"></script>
+</head>
+
+<body>
+<ul class="nav nav-tabs">
+  <li><a href="/view/start">Home</a></li>
+  <li><a href="/users">Users</a></li>
+  <li><a href="/video">Videos</a></li>
+</ul>
+<table class="table table-bordered table-striped">
+   <thead>
+    <tr>
+  	 <th>{{.Title}}</th>
+    </tr>
+   </thead>
+ 	<tbody> 
+  
+  {{.DisplayBody}}
+ 
+ 	</tbody>
+
+ </table>
+</div>
+
+</body>
+
+</html>
