@@ -359,7 +359,10 @@ func FileHandler (w http.ResponseWriter, r *http.Request, path string){
    	}else {
    		println("this is a video")
    		title := "Videoplayer"
-   		HTMLAttr :="<tr><td><video width=\"80%\" height=\"80%\" controls><source src="+newpath+">Your browser does not support the video tag.</video></td></tr>"
+   		replace := strings.NewReplacer("mkv", "vtt")
+   		subpath := replace.Replace(newpath)
+   		HTMLAttr :="<tr><td><video width=\"100%\" height=\"80%\" preload=\"auto\" controls><source src="+newpath+" type=video/mp4 /><track src="+subpath+" kind=\"subtitle\" src=\"de-DE\" label=\"german\"/>Your browser does not support the video tag.</video></td></tr>"
+		println(subpath)
 		dBody = template.HTML(HTMLAttr)
 		renderTemplate(w, "files", &Page{Title: title , DisplayBody: dBody})
 	}
