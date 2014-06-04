@@ -25,6 +25,8 @@ func main() {
 	http.HandleFunc("/vers/", auth.Chkauth(view.MakeVersionHandler(view.VersionHandler)))
 	http.HandleFunc("/users/", auth.Chkauth(view.MakeUserHandler(view.UserHandler)))
 	http.HandleFunc("/video/", auth.Chkauth(view.MakeFileHandler(view.FileHandler)))
+	http.HandleFunc("/approve/", auth.Chkauth(view.MakeApprovalHandler(view.ApproveUser)))
+	//http.HandleFunc("/disapprove/", auth.Chkauth(view.MakeDisapprovaHandler(view.DisapproveUser)))
 	//http.HandleFunc("/reg/", auth.RegisterHandler)
 	http.HandleFunc("/register/", auth.RegisterHandler)
 	http.HandleFunc("/auth/", auth.Auth)

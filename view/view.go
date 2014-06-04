@@ -21,6 +21,7 @@ var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
 var userPath = regexp.MustCompile("^/(users)(/)?$")
 var filePath = regexp.MustCompile("^/(video)/(?)")
 var videoPath = regexp.MustCompile("^/(video)/(.+)[.](mkv|avi|webm|mp4|mpg|mpeg|wmv|ogg|mp3|flac)")
+var approvalPath = regexp.MustCompile("^/(approve)/(.+)")
 
 type Page struct {
 	Title       string
@@ -286,7 +287,6 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 		approvaldecoder := json.NewDecoder(approvalfile)
 		approvedusers := make(map[string]string)
 		err = approvaldecoder.Decode(&approvedusers)
-
 		keys := make([]string, 0, len(users))
 		for k := range users {
 			keys = append(keys, k)
@@ -295,10 +295,17 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 		sort.Strings(keys)
 		for k := range keys {
 			approvalstatus := approvedusers[keys[k]]
-			HTMLAttr := "<tr><td>" + keys[k] + "</td><td>" + approvalstatus + "</td></tr>"
+			if approvalstatus != "approved"{
+				HTMLAttr := "<tr><td>" + keys[k] + "</td><td><form action=\"/approve/"+keys[k]+"\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">"+approvalstatus+"</button></form></td><td><button type=\"button\" class=\"btn btn-primary\" data-toggle=\"button\">Single toggle</button></td></tr>"
+				userlist = userlist + HTMLAttr
+				}else{
+					HTMLAttr := "<tr><td>" + keys[k] + "</td><td><button type=\"button\" class=\"btn btn-primary\" data-url=\"/disapprove/"+keys[k]+"\" data-toggle=\"button\">"+approvalstatus+"</button></td><td><button type=\"button\" class=\"btn btn-primary\" data-toggle=\"button\">Single toggle</button></td></tr>"
+					userlist = userlist + HTMLAttr
+				}
+			
 
 			println(keys[k])
-			userlist = HTMLAttr + userlist
+			
 		}
 		dBody += template.HTML(userlist)
 		renderTemplate(w, "adminpage", &Page{DisplayBody: dBody})
@@ -314,13 +321,61 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 			HTMLAttr := "<tr><td>" + keys[k] + "</td></tr>"
 
 			println(keys[k])
-			userlist = userlist + HTMLAttr
+			userlist =  userlist + HTMLAttr
 		}
 		dBody += template.HTML(userlist)
 		renderTemplate(w, "users", &Page{DisplayBody: dBody})
 	}
 
 	//renderTemplate(w, "users", &Page{DisplayBody: dBody})
+}
+
+func MakeApprovalHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r * http.Request) {
+		m:=approvalPath.FindStringSubmatch(r.URL.Path)
+		if m == nil{
+			return
+		}
+		fn (w,r, m[2])
+	}
+}
+
+func ApproveUser(w http.ResponseWriter, r * http.Request, user string){
+	println("der user ist:"+user)
+	cookie, err := r.Cookie("User")
+	if err != nil {
+		return
+	}
+	fmt.Println(cookie.Name)
+	username := cookie.Value
+	adminfile, err := os.OpenFile("./users/admins", os.O_RDWR|os.O_CREATE, 0600)
+	if err != nil {
+		println("error opening the file")
+	}
+	defer adminfile.Close()
+	admindecoder := json.NewDecoder(adminfile)
+	admins := make(map[string]string)
+	err = admindecoder.Decode(&admins)
+	adminstatus := admins[username]
+	println(adminstatus)
+	if adminstatus == "IsAdmin"{
+		approvalfile, err := os.OpenFile("./users/approvedusers", os.O_RDWR|os.O_CREATE, 0600)
+		if err != nil {
+		println("error opening the file")
+	}
+	defer approvalfile.Close()
+	approvaldecoder := json.NewDecoder(approvalfile)
+	approvedusers := make(map[string]string)
+	err = approvaldecoder.Decode(&approvedusers)
+	println(approvedusers)
+	approvedusers[user]="approved"
+	approvalstatus := approvedusers[user]
+	println( "der neue status von"+user+" ist:"+approvalstatus)
+	jsonedapprovals, err := json.Marshal(approvedusers)
+	ioutil.WriteFile("./users/approvedusers", jsonedapprovals, 0600)
+	}
+	//fmt.Fprintf(w,"approved")
+	http.Redirect(w, r, "/users/", http.StatusFound)
 }
 
 func MakeFileHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
