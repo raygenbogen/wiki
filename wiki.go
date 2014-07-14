@@ -17,14 +17,14 @@ func main() {
 	if _, keyError := os.Stat("static/key.pem"); os.IsNotExist(keyError) {
 		cert.Start()
 	}
-
+	http.HandleFunc("/favicon.ico", handlerICon)
 	http.HandleFunc("/view/", auth.Chkauth(view.MakeHandler(view.ViewHandler)))
 	http.HandleFunc("/edit/", auth.Chkauth(view.MakeHandler(view.EditHandler)))
 	http.HandleFunc("/save/", auth.Chkauth(view.MakeHandler(view.SaveHandler)))
 	http.HandleFunc("/upload/", auth.Chkauth(upload.UploadHandler))
 	http.HandleFunc("/vers/", auth.Chkauth(view.MakeVersionHandler(view.VersionHandler)))
 	http.HandleFunc("/users/", auth.Chkauth(view.MakeUserHandler(view.UserHandler)))
-	http.HandleFunc("/video/", auth.Chkauth(view.MakeFileHandler(view.FileHandler)))
+	http.HandleFunc("/files/", auth.Chkauth(view.MakeFileHandler(view.FileHandler)))
 	http.HandleFunc("/approve/", auth.Chkauth(view.MakeApprovalHandler(view.ApproveUser)))
 	http.HandleFunc("/disapprove/", auth.Chkauth(view.MakeDisApprovalHandler(view.DisApproveUser)))
 	//http.HandleFunc("/reg/", auth.RegisterHandler)
@@ -40,7 +40,7 @@ func main() {
 	}
 
 }
-
+func handlerICon(w http.ResponseWriter, r *http.Request){http.ServeFile(w,r, "./static/favicon.ico")}
 /*func startHandler(w http.ResponseWriter, r *http.Request) {
 
 }*/

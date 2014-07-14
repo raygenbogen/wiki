@@ -11,22 +11,24 @@ import (
 	"os"
 	"regexp"
 	"sort"
-	"time"
 	"strings"
+	"time"
+	"path/filepath"
 )
 
 var templates = template.Must(template.ParseFiles("./static/files.html", "./static/startpage.html", "./static/adminpage.html", "./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html", "./static/users.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view|vers|users)/([a-zA-Z0-9]+)$")
 var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
 var userPath = regexp.MustCompile("^/(users)(/)?$")
-var filePath = regexp.MustCompile("^/(video)/(?)")
-var videoPath = regexp.MustCompile("^/(video)/(.+)[.](mkv|avi|webm|mp4|mpg|mpeg|wmv|ogg|mp3|flac)")
+var filePath = regexp.MustCompile("^/(files)/(?)")
+var videoPath = regexp.MustCompile("^/(files)/(.+)[.](mkv|avi|webm|mp4|mpg|mpeg|wmv|ogg|mp3|flac)")
 var approvalPath = regexp.MustCompile("^/(approve|disapprove)/(.+)")
 
 type Page struct {
 	Title       string
 	Body        string
 	DisplayBody template.HTML
+	Path 		template.HTML
 	Information string
 }
 type Version map[string]*Page
@@ -295,17 +297,16 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 		sort.Strings(keys)
 		for k := range keys {
 			approvalstatus := approvedusers[keys[k]]
-			if approvalstatus != "approved"{
-				HTMLAttr := "<tr><td>" + keys[k] + "</td><td><form action=\"/approve/"+keys[k]+"\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">"+approvalstatus+"</button></form></td><td><button type=\"button\" class=\"btn btn-primary\" data-toggle=\"button\">Single toggle</button></td></tr>"
+			if approvalstatus != "approved" {
+				HTMLAttr := "<tr><td>" + keys[k] + "</td><td><form action=\"/approve/" + keys[k] + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + approvalstatus + "</button></form></td><td><button type=\"button\" class=\"btn btn-primary\" data-toggle=\"button\">Single toggle</button></td></tr>"
 				userlist = userlist + HTMLAttr
-				}else{
-					HTMLAttr := "<tr><td>" + keys[k] + "</td><td><form action=\"/disapprove/"+keys[k]+"\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">"+approvalstatus+"</button></form></td><td><button type=\"button\" class=\"btn btn-primary\" data-toggle=\"button\">Single toggle</button></td></tr>"
-					userlist = userlist + HTMLAttr
-				}
-			
+			} else {
+				HTMLAttr := "<tr><td>" + keys[k] + "</td><td><form action=\"/disapprove/" + keys[k] + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + approvalstatus + "</button></form></td><td><button type=\"button\" class=\"btn btn-primary\" data-toggle=\"button\">Single toggle</button></td></tr>"
+				userlist = userlist + HTMLAttr
+			}
 
 			println(keys[k])
-			
+
 		}
 		dBody += template.HTML(userlist)
 		renderTemplate(w, "adminpage", &Page{DisplayBody: dBody})
@@ -321,7 +322,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 			HTMLAttr := "<tr><td>" + keys[k] + "</td></tr>"
 
 			println(keys[k])
-			userlist =  userlist + HTMLAttr
+			userlist = userlist + HTMLAttr
 		}
 		dBody += template.HTML(userlist)
 		renderTemplate(w, "users", &Page{DisplayBody: dBody})
@@ -331,17 +332,17 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 }
 
 func MakeApprovalHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r * http.Request) {
-		m:=approvalPath.FindStringSubmatch(r.URL.Path)
-		if m == nil{
+	return func(w http.ResponseWriter, r *http.Request) {
+		m := approvalPath.FindStringSubmatch(r.URL.Path)
+		if m == nil {
 			return
 		}
-		fn (w,r, m[2])
+		fn(w, r, m[2])
 	}
 }
 
-func ApproveUser(w http.ResponseWriter, r * http.Request, user string){
-	println("der user ist:"+user)
+func ApproveUser(w http.ResponseWriter, r *http.Request, user string) {
+	println("der user ist:" + user)
 	cookie, err := r.Cookie("User")
 	if err != nil {
 		return
@@ -358,38 +359,38 @@ func ApproveUser(w http.ResponseWriter, r * http.Request, user string){
 	err = admindecoder.Decode(&admins)
 	adminstatus := admins[username]
 	println(adminstatus)
-	if adminstatus == "IsAdmin"{
+	if adminstatus == "IsAdmin" {
 		approvalfile, err := os.OpenFile("./users/approvedusers", os.O_RDWR|os.O_CREATE, 0600)
 		if err != nil {
-		println("error opening the file")
-	}
-	defer approvalfile.Close()
-	approvaldecoder := json.NewDecoder(approvalfile)
-	approvedusers := make(map[string]string)
-	err = approvaldecoder.Decode(&approvedusers)
-	println(approvedusers)
-	approvedusers[user]="approved"
-	approvalstatus := approvedusers[user]
-	println( "der neue status von"+user+" ist:"+approvalstatus)
-	jsonedapprovals, err := json.Marshal(approvedusers)
-	ioutil.WriteFile("./users/approvedusers", jsonedapprovals, 0600)
+			println("error opening the file")
+		}
+		defer approvalfile.Close()
+		approvaldecoder := json.NewDecoder(approvalfile)
+		approvedusers := make(map[string]string)
+		err = approvaldecoder.Decode(&approvedusers)
+		println(approvedusers)
+		approvedusers[user] = "approved"
+		approvalstatus := approvedusers[user]
+		println("der neue status von" + user + " ist:" + approvalstatus)
+		jsonedapprovals, err := json.Marshal(approvedusers)
+		ioutil.WriteFile("./users/approvedusers", jsonedapprovals, 0600)
 	}
 	//fmt.Fprintf(w,"approved")
 	http.Redirect(w, r, "/users/", http.StatusFound)
 }
 
 func MakeDisApprovalHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r * http.Request) {
-		m:=approvalPath.FindStringSubmatch(r.URL.Path)
-		if m == nil{
+	return func(w http.ResponseWriter, r *http.Request) {
+		m := approvalPath.FindStringSubmatch(r.URL.Path)
+		if m == nil {
 			return
 		}
-		fn (w,r, m[2])
+		fn(w, r, m[2])
 	}
 }
 
-func DisApproveUser(w http.ResponseWriter, r * http.Request, user string){
-	println("der user ist:"+user)
+func DisApproveUser(w http.ResponseWriter, r *http.Request, user string) {
+	println("der user ist:" + user)
 	cookie, err := r.Cookie("User")
 	if err != nil {
 		return
@@ -406,21 +407,21 @@ func DisApproveUser(w http.ResponseWriter, r * http.Request, user string){
 	err = admindecoder.Decode(&admins)
 	adminstatus := admins[username]
 	println(adminstatus)
-	if adminstatus == "IsAdmin"{
+	if adminstatus == "IsAdmin" {
 		approvalfile, err := os.OpenFile("./users/approvedusers", os.O_RDWR|os.O_CREATE, 0600)
 		if err != nil {
-		println("error opening the file")
-	}
-	defer approvalfile.Close()
-	approvaldecoder := json.NewDecoder(approvalfile)
-	approvedusers := make(map[string]string)
-	err = approvaldecoder.Decode(&approvedusers)
-	println(approvedusers)
-	approvedusers[user]="NotYetApproved"
-	approvalstatus := approvedusers[user]
-	println( "der neue status von"+user+" ist:"+approvalstatus)
-	jsonedapprovals, err := json.Marshal(approvedusers)
-	ioutil.WriteFile("./users/approvedusers", jsonedapprovals, 0600)
+			println("error opening the file")
+		}
+		defer approvalfile.Close()
+		approvaldecoder := json.NewDecoder(approvalfile)
+		approvedusers := make(map[string]string)
+		err = approvaldecoder.Decode(&approvedusers)
+		println(approvedusers)
+		approvedusers[user] = "NotYetApproved"
+		approvalstatus := approvedusers[user]
+		println("der neue status von" + user + " ist:" + approvalstatus)
+		jsonedapprovals, err := json.Marshal(approvedusers)
+		ioutil.WriteFile("./users/approvedusers", jsonedapprovals, 0600)
 	}
 	//fmt.Fprintf(w,"approved")
 	http.Redirect(w, r, "/users/", http.StatusFound)
@@ -432,45 +433,59 @@ func MakeFileHandler(fn func(http.ResponseWriter, *http.Request, string)) http.H
 		if m == nil {
 			println("not a valid path")
 			return
-			}
-			
-			fn(w, r, r.URL.Path)
-		
+		}
+
+		fn(w, r, r.URL.Path)
 
 	}
 }
 
-func FileHandler (w http.ResponseWriter, r *http.Request, path string){
-	println("i am here")
+func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
+	replacer := strings.NewReplacer("files", "data/fileserver")
 	println(path)
-	replacer := strings.NewReplacer("video", "data/fileserver")
 	newpath := replacer.Replace(path)
-	println(newpath)
+	subpath := newpath
+	var coolnewpath template.HTML 
+	_ , currentdirectory := filepath.Split(path)
+	if path != "/files/"{
+		coolnewpath = template.HTML("<li class=\"active\"><a href=\""+ currentdirectory+"\">"+currentdirectory+"</a></li>")
+	}
+	for i := strings.Count(subpath, "/") -3; i > 0; i-- {
+		basepath := filepath.Dir(subpath)
+		println(basepath)
+		replacer := strings.NewReplacer("data/fileserver", "files")
+		basepath = replacer.Replace(basepath)
+		subpath = basepath
+		_ , lastpartofsubpath := filepath.Split(basepath)
+		
+		HTMLAttr:="<li><a href=\""+ basepath+"\">"+lastpartofsubpath+"</a></li>"
+		coolnewpath = template.HTML(HTMLAttr) + coolnewpath
+		
+	}
 	var dBody template.HTML
-  	m := videoPath.FindStringSubmatch(path)
-	if m == nil{ 
-		println("not a video, but a directory")
+	m := videoPath.FindStringSubmatch(path)
+	if m == nil {
+		
 		files, _ := ioutil.ReadDir("." + newpath)
-		title := " Files and Directories"
+		title := currentdirectory
 		for _, f := range files {
+
 			
-			println(f.Name())
-			HTMLAttr := "<tr><td><a href=\""+path +"/"+ f.Name() + "\">" + f.Name() + "</a></td></tr>"
+
+			HTMLAttr := "<tr><td><a href=\"" + path + "/" + f.Name() + "\">" + f.Name() + "</a></td></tr>"
 			dBody += template.HTML(HTMLAttr)
 		}
-		renderTemplate(w, "files", &Page{Title: title , DisplayBody: dBody})
-   	}else {
-   		println("this is a video")
-   		title := "Videoplayer"
-   		replace := strings.NewReplacer("webm", "vtt")
-   		subpath := replace.Replace(newpath)
-   		println(path)
-   		println(newpath)
-   		HTMLAttr :="<tr><td><video width=\"100%\" height=\"80%\" preload=\"auto\" controls><source src=\""+newpath+"\" type=video/webm /><track src="+subpath+" kind=\"subtitle\" src=\"de-DE\" label=\"german\"/>Your browser does not support the video tag.</video></td></tr>"
-		println(subpath)
+		renderTemplate(w, "files", &Page{Title: title, DisplayBody: dBody, Path: coolnewpath})
+	} else {
+		title := currentdirectory 
+		replace := strings.NewReplacer("webm", "vtt")
+		subpath := replace.Replace(newpath)
+		
+		
+		
+		HTMLAttr := "<tr><td><video width=\"100%\" height=\"80%\" preload=\"auto\" controls><source src=\"" + newpath + "\" type=video/webm /><track src=" + subpath + " kind=\"subtitle\" src=\"de-DE\" label=\"german\"/>Your browser does not support the video tag.</video></td></tr>"
 		dBody = template.HTML(HTMLAttr)
-		renderTemplate(w, "files", &Page{Title: title , DisplayBody: dBody})
+		renderTemplate(w, "files", &Page{Title: title, DisplayBody: dBody, Path: coolnewpath})
 	}
-   	
 
 }
