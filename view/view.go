@@ -458,7 +458,7 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 		subpath = basepath
 		_ , lastpartofsubpath := filepath.Split(basepath)
 		
-		HTMLAttr:="<li><a href=\""+ basepath+"\">"+lastpartofsubpath+"</a></li>"
+		HTMLAttr:="<li class \"active\"><a href=\""+ basepath+"\">"+lastpartofsubpath+"</a></li>"
 		coolnewpath = template.HTML(HTMLAttr) + coolnewpath
 		
 	}

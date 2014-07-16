@@ -9,11 +9,15 @@
 	</head>
 	<body>
 	<form action="/save/{{.Title}}" method="POST">
-	<ul class="nav nav-tabs">
+	<nav class="navbar navbar-fixed-top" role="navigation">
+  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+    <ul class="nav nav-tabs">
 		<li><input type="submit" value="Save"></li>
   		<li><a href="/view/{{.Title}}">Cancel</a></li>
 
   	</ul>
+  	</div>
+  	</nav>
   	
 	
 		<div><textarea name="body" autofocus style="width: 100%; min-height: 20em ;">{{printf "%s" .Body}}</textarea></div>
