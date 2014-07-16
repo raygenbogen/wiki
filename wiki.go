@@ -27,6 +27,7 @@ func main() {
 	http.HandleFunc("/files/", auth.Chkauth(view.MakeFileHandler(view.FileHandler)))
 	http.HandleFunc("/approve/", auth.Chkauth(view.MakeApprovalHandler(view.ApproveUser)))
 	http.HandleFunc("/disapprove/", auth.Chkauth(view.MakeDisApprovalHandler(view.DisApproveUser)))
+	http.HandleFunc("/makeAdmin/", auth.Chkauth(view.MakeAdminHandler(view.MakeAdmin)))
 	//http.HandleFunc("/reg/", auth.RegisterHandler)
 	http.HandleFunc("/register/", auth.RegisterHandler)
 	http.HandleFunc("/auth/", auth.Auth)

@@ -23,6 +23,7 @@ var userPath = regexp.MustCompile("^/(users)(/)?$")
 var filePath = regexp.MustCompile("^/(files)/(?)")
 var videoPath = regexp.MustCompile("^/(files)/(.+)[.](mkv|avi|webm|mp4|mpg|mpeg|wmv|ogg|mp3|flac)")
 var approvalPath = regexp.MustCompile("^/(approve|disapprove)/(.+)")
+var adminPath = regexp.MustCompile("^/(makeAdmin)/(.+)")
 
 type Page struct {
 	Title       string
@@ -298,10 +299,14 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 		for k := range keys {
 			approvalstatus := approvedusers[keys[k]]
 			if approvalstatus != "approved" {
-				HTMLAttr := "<tr><td>" + keys[k] + "</td><td><form action=\"/approve/" + keys[k] + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + approvalstatus + "</button></form></td><td><button type=\"button\" class=\"btn btn-primary\" data-toggle=\"button\">Single toggle</button></td></tr>"
+				adminstatus = admins[keys[k]]
+				println(adminstatus)
+				HTMLAttr := "<tr><td>" + keys[k] + "</td><td><form action=\"/approve/" + keys[k] + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + approvalstatus + "</button></form></td><td><form action=\"/makeAdmin/" + keys[k] + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + adminstatus + "</button></form></td></tr>"
 				userlist = userlist + HTMLAttr
 			} else {
-				HTMLAttr := "<tr><td>" + keys[k] + "</td><td><form action=\"/disapprove/" + keys[k] + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + approvalstatus + "</button></form></td><td><button type=\"button\" class=\"btn btn-primary\" data-toggle=\"button\">Single toggle</button></td></tr>"
+				adminstatus = admins[keys[k]]
+				println(adminstatus)
+				HTMLAttr := "<tr><td>" + keys[k] + "</td><td><form action=\"/disapprove/" + keys[k] + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + approvalstatus + "</button></form></td><td><form action=\"/makeAdmin/" + keys[k] + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + adminstatus + "</button></form></td></tr>"
 				userlist = userlist + HTMLAttr
 			}
 
@@ -339,6 +344,47 @@ func MakeApprovalHandler(fn func(http.ResponseWriter, *http.Request, string)) ht
 		}
 		fn(w, r, m[2])
 	}
+}
+
+func MakeAdminHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		m := adminPath.FindStringSubmatch(r.URL.Path)
+		if m == nil {
+			return
+		}
+		fn(w, r, m[2])
+}
+}
+
+func MakeAdmin(w http.ResponseWriter, r *http.Request, user string) {
+	cookie, err := r.Cookie("User")
+	if err != nil {
+		return
+	}
+	println("ready to make some admins")
+	username := cookie.Value
+	adminfile, err := os.OpenFile("./users/admins", os.O_RDWR|os.O_CREATE, 0600)
+	if err != nil {
+		println("error opening the file")
+	}
+	defer adminfile.Close()
+	admindecoder := json.NewDecoder(adminfile)
+	admins := make(map[string]string)
+	err = admindecoder.Decode(&admins)
+	adminstatus := admins[username]
+	if adminstatus == "IsAdmin" {
+		if admins[user] == "IsAdmin"{
+			admins[user] = "IsNoTAdmin"
+		}else {
+			println(admins[user])
+			admins[user] = "IsAdmin"
+			println(admins[user])
+		}
+		jsonedadmins, _ := json.Marshal(admins)
+		ioutil.WriteFile("./users/admins", jsonedadmins, 0600)
+	}
+	//fmt.Fprintf(w,"approved")
+	http.Redirect(w, r, "/users/", http.StatusFound)
 }
 
 func ApproveUser(w http.ResponseWriter, r *http.Request, user string) {
