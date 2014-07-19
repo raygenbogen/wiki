@@ -9,11 +9,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 	"time"
-	"path/filepath"
 )
 
 var templates = template.Must(template.ParseFiles("./static/files.html", "./static/startpage.html", "./static/adminpage.html", "./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html", "./static/users.html"))
@@ -29,7 +29,7 @@ type Page struct {
 	Title       string
 	Body        string
 	DisplayBody template.HTML
-	Path 		template.HTML
+	Path        template.HTML
 	Information string
 }
 type Version map[string]*Page
@@ -353,7 +353,7 @@ func MakeAdminHandler(fn func(http.ResponseWriter, *http.Request, string)) http.
 			return
 		}
 		fn(w, r, m[2])
-}
+	}
 }
 
 func MakeAdmin(w http.ResponseWriter, r *http.Request, user string) {
@@ -373,9 +373,9 @@ func MakeAdmin(w http.ResponseWriter, r *http.Request, user string) {
 	err = admindecoder.Decode(&admins)
 	adminstatus := admins[username]
 	if adminstatus == "IsAdmin" {
-		if admins[user] == "IsAdmin"{
+		if admins[user] == "IsAdmin" {
 			admins[user] = "IsNoTAdmin"
-		}else {
+		} else {
 			println(admins[user])
 			admins[user] = "IsAdmin"
 			println(admins[user])
@@ -491,44 +491,40 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 	println(path)
 	newpath := replacer.Replace(path)
 	subpath := newpath
-	var coolnewpath template.HTML 
-	_ , currentdirectory := filepath.Split(path)
-	if path != "/files/"{
-		coolnewpath = template.HTML("<li class=\"active\"><a href=\""+ currentdirectory+"\">"+currentdirectory+"</a></li>")
+	var coolnewpath template.HTML
+	_, currentdirectory := filepath.Split(path)
+	if path != "/files/" {
+		coolnewpath = template.HTML("<li class=\"active\"><a href=\"" + currentdirectory + "\">" + currentdirectory + "</a></li>")
 	}
-	for i := strings.Count(subpath, "/") -3; i > 0; i-- {
+	for i := strings.Count(subpath, "/") - 3; i > 0; i-- {
 		basepath := filepath.Dir(subpath)
 		println(basepath)
 		replacer := strings.NewReplacer("data/fileserver", "files")
 		basepath = replacer.Replace(basepath)
 		subpath = basepath
-		_ , lastpartofsubpath := filepath.Split(basepath)
-		
-		HTMLAttr:="<li class \"active\"><a href=\""+ basepath+"\">"+lastpartofsubpath+"</a></li>"
+		_, lastpartofsubpath := filepath.Split(basepath)
+
+		HTMLAttr := "<li class \"active\"><a href=\"" + basepath + "\">" + lastpartofsubpath + "</a></li>"
 		coolnewpath = template.HTML(HTMLAttr) + coolnewpath
-		
+
 	}
 	var dBody template.HTML
 	m := videoPath.FindStringSubmatch(path)
 	if m == nil {
-		
+
 		files, _ := ioutil.ReadDir("." + newpath)
 		title := currentdirectory
 		for _, f := range files {
-
-			
 
 			HTMLAttr := "<tr><td><a href=\"" + path + "/" + f.Name() + "\">" + f.Name() + "</a></td></tr>"
 			dBody += template.HTML(HTMLAttr)
 		}
 		renderTemplate(w, "files", &Page{Title: title, DisplayBody: dBody, Path: coolnewpath})
 	} else {
-		title := currentdirectory 
+		title := currentdirectory
 		replace := strings.NewReplacer("webm", "vtt")
 		subpath := replace.Replace(newpath)
-		
-		
-		
+
 		HTMLAttr := "<tr><td><video width=\"100%\" height=\"80%\" preload=\"auto\" controls><source src=\"" + newpath + "\" type=video/webm /><track src=" + subpath + " kind=\"subtitle\" src=\"de-DE\" label=\"german\"/>Your browser does not support the video tag.</video></td></tr>"
 		dBody = template.HTML(HTMLAttr)
 		renderTemplate(w, "files", &Page{Title: title, DisplayBody: dBody, Path: coolnewpath})

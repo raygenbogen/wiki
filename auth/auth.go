@@ -2,15 +2,15 @@ package auth
 
 import (
 	"code.google.com/p/go.crypto/bcrypt"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
-	"fmt"
-	"encoding/hex"
-	"crypto/md5"
 )
 
 /*type Users struct {
@@ -46,17 +46,17 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 		approvedusers := make(map[string]string)
 		err = decoder.Decode(&users)
 		erro = approvaldecoder.Decode(&approvedusers)
-		if erro != nil{
+		if erro != nil {
 
 		}
 		if err != nil {
 			println("error decoding")
-			http.Redirect(w,r, "/register", http.StatusFound)
+			http.Redirect(w, r, "/register", http.StatusFound)
 		} else {
 			if _, ok := users[username]; ok {
 
 				println("user is there")
-				if _, okay := approvedusers[username]; okay{
+				if _, okay := approvedusers[username]; okay {
 					println("user is also in approvedusers")
 					stateofapproval := approvedusers[username]
 					if stateofapproval != "approved" {
@@ -73,7 +73,7 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 				} else {
 					//do cookie stuff
 					t := time.Now()
-					expiration := time.Now().AddDate(1,0,0)
+					expiration := time.Now().AddDate(1, 0, 0)
 					fmt.Println(expiration)
 					//expirationexpiration.Year += 1
 					h := md5.New()
@@ -81,15 +81,14 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 					hashedTime := t.Format(layout)
 					hashedStoredPassword := hex.EncodeToString(h.Sum([]byte(storedPassword)))
 					cookie := http.Cookie{Name: "User", Value: username, Path: "/", Expires: expiration}
-					cookie2 := http.Cookie{Name: hashedStoredPassword, Value: hashedTime, Path: "/" ,Expires:expiration}
-					http.SetCookie(w, &cookie)  
+					cookie2 := http.Cookie{Name: hashedStoredPassword, Value: hashedTime, Path: "/", Expires: expiration}
+					http.SetCookie(w, &cookie)
 					http.SetCookie(w, &cookie2)
 					fmt.Println(cookie.Value)
 					fmt.Println(cookie2.Name)
 					http.Redirect(w, r, "/view/start", http.StatusFound)
 
 				}
-
 
 			} else {
 				println("guessing not ok?")
@@ -112,7 +111,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		username := r.FormValue("username")
 		password := r.FormValue("password")
- 		println(username)
+		println(username)
 		println(password)
 		if len(password) < 8 {
 			println("more letters")
@@ -124,10 +123,10 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		f, err := os.OpenFile("./users/users", os.O_RDWR|os.O_CREATE, 0600)
 		fi, erro := os.OpenFile("./users/admins", os.O_RDWR|os.O_CREATE, 0600)
 		fil, er := os.OpenFile("./users/approvedusers", os.O_RDWR|os.O_CREATE, 0600)
-		if erro != nil{
+		if erro != nil {
 			println("no adminsFile")
 		}
-		if er != nil{
+		if er != nil {
 
 		}
 
@@ -145,8 +144,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		admindecoder := json.NewDecoder(fi)
 		approvaldecoder := json.NewDecoder(fil)
 		users := make(map[string]string)
-		admins := make (map[string]string)
-		approvedusers := make (map[string]string)
+		admins := make(map[string]string)
+		approvedusers := make(map[string]string)
 		err = decoder.Decode(&users)
 		erro = admindecoder.Decode(&admins)
 		er = approvaldecoder.Decode(&approvedusers)
@@ -176,7 +175,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			println("did we jsoned the users yet?")
 
 		}
-		if er != nil{
+		if er != nil {
 
 		}
 		if erro != nil {
@@ -208,18 +207,18 @@ func Crypt(password []byte) ([]byte, error) {
 	return bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
 }
 
-func Chkauth(f http.HandlerFunc) http.HandlerFunc{
-	return func(w http.ResponseWriter, r *http.Request){
+func Chkauth(f http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("do i even enter this function?")
-		if r == nil{
+		if r == nil {
 			fmt.Println("there is no request.ficken")
 		}
 		cookie, err := r.Cookie("User")
-		
-		if err!= nil{
+
+		if err != nil {
 			fmt.Println("i'm not reading anything cookielike")
 			fmt.Println(err)
-			http.Redirect(w,r, "/auth/",http.StatusFound)
+			http.Redirect(w, r, "/auth/", http.StatusFound)
 			return
 
 		}
@@ -236,7 +235,7 @@ func Chkauth(f http.HandlerFunc) http.HandlerFunc{
 
 		if err != nil {
 			println("error decoding")
-			http.Redirect(w,r,"/auth", http.StatusFound)
+			http.Redirect(w, r, "/auth", http.StatusFound)
 		} else {
 			if _, ok := users[username]; ok {
 				println("user is there")
@@ -244,14 +243,14 @@ func Chkauth(f http.HandlerFunc) http.HandlerFunc{
 				h := md5.New()
 				hashedStoredPassword := hex.EncodeToString(h.Sum([]byte(storedPassword)))
 				_, err := r.Cookie(hashedStoredPassword)
-				if err != nil{
+				if err != nil {
 					println("no cookie found")
-					http.Redirect(w,r, "/auth/", http.StatusFound)
+					http.Redirect(w, r, "/auth/", http.StatusFound)
 					return
 				}
 				approvalfile, err := os.OpenFile("./users/approvedusers", os.O_RDWR|os.O_CREATE, 0600)
 				if err != nil {
-				println("error opening the file")
+					println("error opening the file")
 				}
 				defer approvalfile.Close()
 				approvaldecoder := json.NewDecoder(approvalfile)
@@ -259,18 +258,17 @@ func Chkauth(f http.HandlerFunc) http.HandlerFunc{
 				err = approvaldecoder.Decode(&approvedusers)
 				approvalstatus := approvedusers[username]
 				println(approvalstatus)
-				if approvalstatus != "approved"{
-					http.Redirect(w,r, "/auth", http.StatusFound)
+				if approvalstatus != "approved" {
+					http.Redirect(w, r, "/auth", http.StatusFound)
 				}
 
-				}else {
+			} else {
 				println("no user found")
-				http.Redirect(w,r, "/auth", http.StatusFound)
+				http.Redirect(w, r, "/auth", http.StatusFound)
 			}
 		}
 
-
-		f(w,r)
+		f(w, r)
 	}
 
 }
