@@ -20,13 +20,21 @@ import (
 	Admin string
 }*/
 
-var templates = template.Must(template.ParseFiles("./static/auth.html", "./static/register.html"))
+var templates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_auth.html"))
+
+type RenderData struct {
+  Title string
+  Headline string
+  Message string
+  Action string
+  Submit string
+  MenuEntries [][2]string
+}
 
 func Auth(w http.ResponseWriter, r *http.Request) {
-
 	switch r.Method {
 	case "GET":
-		renderAuth(w, "auth.html", nil)
+    renderAuth(w, "")
 	case "POST":
 		username := r.FormValue("username")
 		enteredPassword := r.FormValue("password")
@@ -61,14 +69,14 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 					stateofapproval := approvedusers[username]
 					if stateofapproval != "approved" {
 						println("not approved")
-						renderAuth(w, "auth.html", "You are not yet approved! Please contact one of the Administrators!")
+						renderAuth(w, "You are not yet approved! Please contact one of the Administrators!")
 					}
 				}
 				storedPassword := users[username]
 				err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(enteredPassword))
 				if err != nil {
 					println("password is wrong")
-					renderAuth(w, "auth.hmtl", "Wrong Password!")
+					renderAuth(w, "Wrong Password!")
 
 				} else {
 					//do cookie stuff
@@ -99,15 +107,25 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
-func renderAuth(w http.ResponseWriter, tmpl string, data interface{}) {
-	templates.ExecuteTemplate(w, "auth.html", data)
+func renderAuth(w http.ResponseWriter, message string) {
+    templates.ExecuteTemplate(w, "main", &RenderData{
+      "Login",
+      "Login",
+      message,
+      "/auth/",
+      "Login",
+      [][2]string{
+        {"Home", "/view/start"},
+        {"Create Account", "/register"},
+      },
+    })
 }
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 
 	case "GET":
-		renderRegister(w, "register.html", nil)
+		renderRegister(w, "")
 	case "POST":
 		username := r.FormValue("username")
 		password := r.FormValue("password")
@@ -115,7 +133,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		println(password)
 		if len(password) < 8 {
 			println("more letters")
-			renderRegister(w, "register.html", "More Letters.Do it.Do it Now!")
+			renderRegister(w, "More Letters.Do it.Do it Now!")
 			return
 		}
 
@@ -153,7 +171,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			println("error decoding")
 		} else {
 			if _, ok := users[username]; ok {
-				renderRegister(w, "register.html", "User already exists!")
+				renderRegister(w, "User already exists!")
 				println("user already exists")
 
 			} else {
@@ -187,14 +205,17 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		ioutil.WriteFile("./users/admins", jsonedadmins, 0600)
 		http.Redirect(w, r, "/auth/", http.StatusFound)
 	}
-
-}
-func Register(w http.ResponseWriter, r *http.Request) {
-
 }
 
-func renderRegister(w http.ResponseWriter, tmpl string, data interface{}) {
-	templates.ExecuteTemplate(w, "register.html", data)
+func renderRegister(w http.ResponseWriter, message string) {
+    templates.ExecuteTemplate(w, "main", &RenderData{
+      "Create Account",
+      "Register",
+      message,
+      "/register/",
+      "Create",
+      [][2]string{{"Home", "/view/start"}},
+    })
 }
 
 func clear(b []byte) {

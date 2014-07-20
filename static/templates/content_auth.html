@@ -1,0 +1,15 @@
+{{define "content"}}
+<h1>{{.Headline}}</h1>
+<div class="message">{{.Message}}</div>
+<form action="{{.Action}}" method="POST">
+  <div class="input-group">
+    <input type="text" class="form-control" placeholder="Username" name="username">
+  </div>
+  <div class="input-group">
+    <input type="password" class="form-control" placeholder="Password" name="password">
+  </div>
+  <div>
+    <input type="submit" value="{{.Submit}}">
+  </div>
+</form>
+{{end}}
