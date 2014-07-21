@@ -1,0 +1,16 @@
+{{define "main"}}
+<!DOCTYPE html>
+<html>
+{{template "head" .}}
+  <body>
+    <form action="/save/{{.Title}}" method="POST">
+    {{template "menu" .}}
+      <div>
+        <textarea name="body" autofocus style="width: 100%; min-height: 20em;">{{printf "%s" .Body}}</textarea>
+      </div>
+      <iframe  width="100%" frameborder="0" src="/upload/"></iframe>
+    </form>
+    {{template "content" .}}
+  </body>
+</html>
+{{end}}

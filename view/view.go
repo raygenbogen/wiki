@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var templates = template.Must(template.ParseFiles("./static/files.html", "./static/adminpage.html", "./static/edit.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html", "./static/users.html"))
+var templates = template.Must(template.ParseFiles("./static/files.html", "./static/adminpage.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html", "./static/users.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view|vers|users)/([a-zA-Z0-9]+)$")
 var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
 var userPath = regexp.MustCompile("^/(users)(/)?$")
@@ -191,13 +191,14 @@ func MakeRedirectHandler(target string) http.HandlerFunc {
 	}
 }
 
+var editTemplates = template.Must(template.ParseFiles("./static/templates/main_edit.html", "./static/templates/head.html", "./static/templates/menu_edit.html", "./static/templates/content_view.html"))
+
 func EditHandler(w http.ResponseWriter, r *http.Request, title string) {
 	p, err := loadPage(title)
 	if err != nil {
 		p = &Page{Title: title}
 	}
-
-	renderTemplate(w, "edit", p)
+	editTemplates.ExecuteTemplate(w, "main", p)
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
