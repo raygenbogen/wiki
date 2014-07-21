@@ -34,10 +34,10 @@ type Page struct {
 }
 
 type User struct {
-	Username string
-	Password string
+	Username       string
+	Password       string
 	Approvalstatus string
-	Adminstatus string
+	Adminstatus    string
 }
 
 type Version map[string]*Page
@@ -275,13 +275,17 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 
 		}
 		sort.Strings(keys)
+		reverseKeys := make([]string, len(keys))
+		for i, k := range keys {
+			reverseKeys[len(keys)-i-1] = k
+		}
 		data := struct {
 			Title       string
 			Versions    []string
 			MenuEntries [][2]string
 		}{
 			title,
-			keys,
+			reverseKeys,
 			[][2]string{
 				{"Home", "/view/start"},
 				{title, "/view/" + title},
@@ -297,12 +301,12 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 
 func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 	var dBody template.HTML
- 	cookie, err := r.Cookie("User")
+	cookie, err := r.Cookie("User")
 	if err != nil {
 		return
 	}
 	username := cookie.Value
-	file, err := os.Open("./users/"+username)
+	file, err := os.Open("./users/" + username)
 	if err != nil {
 		println("error opening the file")
 	}
@@ -312,7 +316,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 	err = decoder.Decode(&visitor)
 	var userlist string
 	if visitor.Adminstatus == "admin" {
-		userfiles,_ := ioutil.ReadDir("./users")
+		userfiles, _ := ioutil.ReadDir("./users")
 		for _, users := range userfiles {
 			var specificUser User
 			userfile, err := os.Open("./users/" + users.Name())
@@ -323,12 +327,12 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 			err = decoder.Decode(&specificUser)
 			HTMLAttr := "<tr><td>" + specificUser.Username + "</td><td><form action=\"/changeApprovalstatus/" + specificUser.Username + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + specificUser.Approvalstatus + "</button></form></td><td><form action=\"/changeAdminstatus/" + specificUser.Username + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + specificUser.Adminstatus + "</button></form></td></tr>"
 			userlist = userlist + HTMLAttr
-			
+
 		}
 		dBody += template.HTML(userlist)
 		renderTemplate(w, "adminpage", &Page{DisplayBody: dBody})
 	} else {
-		userfiles,_ := ioutil.ReadDir("./users")
+		userfiles, _ := ioutil.ReadDir("./users")
 		for _, users := range userfiles {
 			var specificUser User
 			userfile, err := os.Open("./users/" + users.Name())
@@ -337,7 +341,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 			}
 			decoder = json.NewDecoder(userfile)
 			err = decoder.Decode(&specificUser)
- 			HTMLAttr := "<tr><td>" + specificUser.Username + "</td></tr>"
+			HTMLAttr := "<tr><td>" + specificUser.Username + "</td></tr>"
 			userlist = userlist + HTMLAttr
 		}
 		dBody += template.HTML(userlist)
@@ -396,7 +400,7 @@ func ChangeAdminstatus(w http.ResponseWriter, r *http.Request, user string) {
 			specificUser.Adminstatus = "admin"
 		}
 		jsonedUser, _ := json.Marshal(specificUser)
-		ioutil.WriteFile("./users/" + user, jsonedUser, 0600)
+		ioutil.WriteFile("./users/"+user, jsonedUser, 0600)
 	}
 	http.Redirect(w, r, "/users/", http.StatusFound)
 }
@@ -431,7 +435,7 @@ func ChangeApprovalstatus(w http.ResponseWriter, r *http.Request, user string) {
 			specificUser.Approvalstatus = "approved"
 		}
 		jsonedUser, _ := json.Marshal(specificUser)
-		ioutil.WriteFile("./users/" + user, jsonedUser, 0600)
+		ioutil.WriteFile("./users/"+user, jsonedUser, 0600)
 	}
 	http.Redirect(w, r, "/users/", http.StatusFound)
 }
