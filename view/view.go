@@ -22,8 +22,8 @@ var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
 var userPath = regexp.MustCompile("^/(users)(/)?$")
 var filePath = regexp.MustCompile("^/(files)/(?)")
 var videoPath = regexp.MustCompile("^/(files)/(.+)[.](mkv|avi|webm|mp4|mpg|mpeg|wmv|ogg|mp3|flac)")
-var approvalPath = regexp.MustCompile("^/(approve|disapprove)/(.+)")
-var adminPath = regexp.MustCompile("^/(makeAdmin)/(.+)")
+var approvalPath = regexp.MustCompile("^/(changeApprovalstatus)/(.+)")
+var adminPath = regexp.MustCompile("^/(changeAdminstatus)/(.+)")
 
 type Page struct {
 	Title       string
@@ -32,6 +32,14 @@ type Page struct {
 	Path        template.HTML
 	Information string
 }
+
+type User struct {
+	Username string
+	Password string
+	Approvalstatus string
+	Adminstatus string
+}
+
 type Version map[string]*Page
 
 func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
@@ -255,85 +263,52 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 
 func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 	var dBody template.HTML
-
-	cookie, err := r.Cookie("User")
+ 	cookie, err := r.Cookie("User")
 	if err != nil {
 		return
 	}
-	fmt.Println(cookie.Name)
 	username := cookie.Value
-	file, err := os.OpenFile("./users/users", os.O_RDWR|os.O_CREATE, 0600)
+	file, err := os.Open("./users/"+username)
 	if err != nil {
 		println("error opening the file")
 	}
 	defer file.Close()
 	decoder := json.NewDecoder(file)
-	users := make(map[string]string)
-	err = decoder.Decode(&users)
-	adminfile, err := os.OpenFile("./users/admins", os.O_RDWR|os.O_CREATE, 0600)
-	if err != nil {
-		println("error opening the file")
-	}
-	defer adminfile.Close()
-	admindecoder := json.NewDecoder(adminfile)
-	admins := make(map[string]string)
-	err = admindecoder.Decode(&admins)
-	adminstatus := admins[username]
-	println(adminstatus)
+	var visitor User
+	err = decoder.Decode(&visitor)
 	var userlist string
-	if adminstatus == "IsAdmin" {
-		approvalfile, err := os.OpenFile("./users/approvedusers", os.O_RDWR|os.O_CREATE, 0600)
-		if err != nil {
-			println("error opening the file")
-		}
-		defer approvalfile.Close()
-		approvaldecoder := json.NewDecoder(approvalfile)
-		approvedusers := make(map[string]string)
-		err = approvaldecoder.Decode(&approvedusers)
-		keys := make([]string, 0, len(users))
-		for k := range users {
-			keys = append(keys, k)
-
-		}
-		sort.Strings(keys)
-		for k := range keys {
-			approvalstatus := approvedusers[keys[k]]
-			if approvalstatus != "approved" {
-				adminstatus = admins[keys[k]]
-				println(adminstatus)
-				HTMLAttr := "<tr><td>" + keys[k] + "</td><td><form action=\"/approve/" + keys[k] + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + approvalstatus + "</button></form></td><td><form action=\"/makeAdmin/" + keys[k] + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + adminstatus + "</button></form></td></tr>"
-				userlist = userlist + HTMLAttr
-			} else {
-				adminstatus = admins[keys[k]]
-				println(adminstatus)
-				HTMLAttr := "<tr><td>" + keys[k] + "</td><td><form action=\"/disapprove/" + keys[k] + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + approvalstatus + "</button></form></td><td><form action=\"/makeAdmin/" + keys[k] + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + adminstatus + "</button></form></td></tr>"
-				userlist = userlist + HTMLAttr
+	if visitor.Adminstatus == "admin" {
+		userfiles,_ := ioutil.ReadDir("./users")
+		for _, users := range userfiles {
+			var specificUser User
+			userfile, err := os.Open("./users/" + users.Name())
+			if err != nil {
+				println("error opening the file")
 			}
-
-			println(keys[k])
-
+			decoder = json.NewDecoder(userfile)
+			err = decoder.Decode(&specificUser)
+			HTMLAttr := "<tr><td>" + specificUser.Username + "</td><td><form action=\"/changeApprovalstatus/" + specificUser.Username + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + specificUser.Approvalstatus + "</button></form></td><td><form action=\"/changeAdminstatus/" + specificUser.Username + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + specificUser.Adminstatus + "</button></form></td></tr>"
+			userlist = userlist + HTMLAttr
+			
 		}
 		dBody += template.HTML(userlist)
 		renderTemplate(w, "adminpage", &Page{DisplayBody: dBody})
 	} else {
-		keys := make([]string, 0, len(users))
-		for k := range users {
-			keys = append(keys, k)
-
-		}
-		sort.Strings(keys)
-		for k := range keys {
-
-			HTMLAttr := "<tr><td>" + keys[k] + "</td></tr>"
-
-			println(keys[k])
+		userfiles,_ := ioutil.ReadDir("./users")
+		for _, users := range userfiles {
+			var specificUser User
+			userfile, err := os.Open("./users/" + users.Name())
+			if err != nil {
+				println("error opening the file")
+			}
+			decoder = json.NewDecoder(userfile)
+			err = decoder.Decode(&specificUser)
+ 			HTMLAttr := "<tr><td>" + specificUser.Username + "</td></tr>"
 			userlist = userlist + HTMLAttr
 		}
 		dBody += template.HTML(userlist)
 		renderTemplate(w, "users", &Page{DisplayBody: dBody})
 	}
-
-	//renderTemplate(w, "users", &Page{DisplayBody: dBody})
 }
 
 func MakeApprovalHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
@@ -356,120 +331,74 @@ func MakeAdminHandler(fn func(http.ResponseWriter, *http.Request, string)) http.
 	}
 }
 
-func MakeAdmin(w http.ResponseWriter, r *http.Request, user string) {
+func ChangeAdminstatus(w http.ResponseWriter, r *http.Request, user string) {
+	println("starting func")
+	var visitor User
+	var specificUser User
 	cookie, err := r.Cookie("User")
 	if err != nil {
 		return
 	}
-	println("ready to make some admins")
 	username := cookie.Value
-	adminfile, err := os.OpenFile("./users/admins", os.O_RDWR|os.O_CREATE, 0600)
+	visitorfile, err := os.Open("./users/" + username)
 	if err != nil {
 		println("error opening the file")
 	}
-	defer adminfile.Close()
-	admindecoder := json.NewDecoder(adminfile)
-	admins := make(map[string]string)
-	err = admindecoder.Decode(&admins)
-	adminstatus := admins[username]
-	if adminstatus == "IsAdmin" {
-		if admins[user] == "IsAdmin" {
-			admins[user] = "IsNoTAdmin"
+	defer visitorfile.Close()
+	visitordecoder := json.NewDecoder(visitorfile)
+	err = visitordecoder.Decode(&visitor)
+	userfile, err := os.Open("./users/" + user)
+	if err != nil {
+		println("error opening the file")
+	}
+	defer userfile.Close()
+	specificdecoder := json.NewDecoder(userfile)
+	err = specificdecoder.Decode(&specificUser)
+	println("decoding done")
+	if visitor.Adminstatus == "admin" {
+		if specificUser.Adminstatus == "admin" {
+			specificUser.Adminstatus = "user"
 		} else {
-			println(admins[user])
-			admins[user] = "IsAdmin"
-			println(admins[user])
+			specificUser.Adminstatus = "admin"
 		}
-		jsonedadmins, _ := json.Marshal(admins)
-		ioutil.WriteFile("./users/admins", jsonedadmins, 0600)
+		jsonedUser, _ := json.Marshal(specificUser)
+		ioutil.WriteFile("./users/" + user, jsonedUser, 0600)
 	}
-	//fmt.Fprintf(w,"approved")
 	http.Redirect(w, r, "/users/", http.StatusFound)
 }
 
-func ApproveUser(w http.ResponseWriter, r *http.Request, user string) {
-	println("der user ist:" + user)
+func ChangeApprovalstatus(w http.ResponseWriter, r *http.Request, user string) {
+	var visitor User
+	var specificUser User
 	cookie, err := r.Cookie("User")
 	if err != nil {
 		return
 	}
-	fmt.Println(cookie.Name)
 	username := cookie.Value
-	adminfile, err := os.OpenFile("./users/admins", os.O_RDWR|os.O_CREATE, 0600)
+	visitorfile, err := os.Open("./users/" + username)
 	if err != nil {
 		println("error opening the file")
 	}
-	defer adminfile.Close()
-	admindecoder := json.NewDecoder(adminfile)
-	admins := make(map[string]string)
-	err = admindecoder.Decode(&admins)
-	adminstatus := admins[username]
-	println(adminstatus)
-	if adminstatus == "IsAdmin" {
-		approvalfile, err := os.OpenFile("./users/approvedusers", os.O_RDWR|os.O_CREATE, 0600)
-		if err != nil {
-			println("error opening the file")
-		}
-		defer approvalfile.Close()
-		approvaldecoder := json.NewDecoder(approvalfile)
-		approvedusers := make(map[string]string)
-		err = approvaldecoder.Decode(&approvedusers)
-		println(approvedusers)
-		approvedusers[user] = "approved"
-		approvalstatus := approvedusers[user]
-		println("der neue status von" + user + " ist:" + approvalstatus)
-		jsonedapprovals, err := json.Marshal(approvedusers)
-		ioutil.WriteFile("./users/approvedusers", jsonedapprovals, 0600)
-	}
-	//fmt.Fprintf(w,"approved")
-	http.Redirect(w, r, "/users/", http.StatusFound)
-}
-
-func MakeDisApprovalHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		m := approvalPath.FindStringSubmatch(r.URL.Path)
-		if m == nil {
-			return
-		}
-		fn(w, r, m[2])
-	}
-}
-
-func DisApproveUser(w http.ResponseWriter, r *http.Request, user string) {
-	println("der user ist:" + user)
-	cookie, err := r.Cookie("User")
-	if err != nil {
-		return
-	}
-	fmt.Println(cookie.Name)
-	username := cookie.Value
-	adminfile, err := os.OpenFile("./users/admins", os.O_RDWR|os.O_CREATE, 0600)
+	defer visitorfile.Close()
+	visitordecoder := json.NewDecoder(visitorfile)
+	err = visitordecoder.Decode(&visitor)
+	userfile, err := os.Open("./users/" + user)
 	if err != nil {
 		println("error opening the file")
 	}
-	defer adminfile.Close()
-	admindecoder := json.NewDecoder(adminfile)
-	admins := make(map[string]string)
-	err = admindecoder.Decode(&admins)
-	adminstatus := admins[username]
-	println(adminstatus)
-	if adminstatus == "IsAdmin" {
-		approvalfile, err := os.OpenFile("./users/approvedusers", os.O_RDWR|os.O_CREATE, 0600)
-		if err != nil {
-			println("error opening the file")
+	defer userfile.Close()
+	specificdecoder := json.NewDecoder(userfile)
+	err = specificdecoder.Decode(&specificUser)
+	println("decoding done")
+	if visitor.Adminstatus == "admin" {
+		if specificUser.Approvalstatus == "approved" {
+			specificUser.Approvalstatus = "not approved"
+		} else {
+			specificUser.Approvalstatus = "approved"
 		}
-		defer approvalfile.Close()
-		approvaldecoder := json.NewDecoder(approvalfile)
-		approvedusers := make(map[string]string)
-		err = approvaldecoder.Decode(&approvedusers)
-		println(approvedusers)
-		approvedusers[user] = "NotYetApproved"
-		approvalstatus := approvedusers[user]
-		println("der neue status von" + user + " ist:" + approvalstatus)
-		jsonedapprovals, err := json.Marshal(approvedusers)
-		ioutil.WriteFile("./users/approvedusers", jsonedapprovals, 0600)
+		jsonedUser, _ := json.Marshal(specificUser)
+		ioutil.WriteFile("./users/" + user, jsonedUser, 0600)
 	}
-	//fmt.Fprintf(w,"approved")
 	http.Redirect(w, r, "/users/", http.StatusFound)
 }
 
