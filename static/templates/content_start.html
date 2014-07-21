@@ -1,0 +1,24 @@
+{{define "content"}}
+<h1>{{.Title}}</h1>
+<div>Welcome! Have a look at the existing pages below or create a new one.</div>
+<table class="table table-bordered table-striped">
+  <thead>
+    <tr>
+      <th>Article</th>
+      <th>Versions of this Article</th>
+    </tr>
+  </thead>
+  <tbody> 
+    {{range $article := .Articles}}
+    <tr>
+      <td>
+        <a href="/view/{{$article}}">{{$article}}</a>
+      </td>
+      <td>
+        <a href="/vers/{{$article}}">{{$article}}</a>
+      </td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

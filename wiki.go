@@ -42,7 +42,3 @@ func main() {
 
 }
 func handlerICon(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, "./static/favicon.ico") }
-
-/*func startHandler(w http.ResponseWriter, r *http.Request) {
-
-}*/

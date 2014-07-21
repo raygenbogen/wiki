@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var templates = template.Must(template.ParseFiles("./static/files.html", "./static/startpage.html", "./static/adminpage.html", "./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html", "./static/users.html"))
+var templates = template.Must(template.ParseFiles("./static/files.html", "./static/adminpage.html", "./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html", "./static/users.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view|vers|users)/([a-zA-Z0-9]+)$")
 var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
 var userPath = regexp.MustCompile("^/(users)(/)?$")
@@ -92,62 +92,73 @@ func MakeUserHandler(fn func(http.ResponseWriter, *http.Request, string)) http.H
 	}
 }
 
-func loadPage(title string) (*Page, error) {
+var startTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_start.html"))
 
-	var body string
-
-	var dBody template.HTML
-	var information string
-	println("last updated")
-	println(information)
-
-	if title == "start" {
-		files, _ := ioutil.ReadDir("./articles/")
-		body = "Welcome! Have a look at the existing pages below or create a new one."
-		for _, f := range files {
-			HTMLAttr := "<tr><td><a href=\"/view/" + f.Name() + "\">" + f.Name() + "</a></td><td><a href=\"/vers/" + f.Name() + "\">" + f.Name() + "</a></td></tr>"
-			dBody += template.HTML(HTMLAttr)
+func startPage(w http.ResponseWriter) {
+	files, _ := ioutil.ReadDir("./articles/")
+	//Note that the articles slice starts with len=0, but cap=len(files)
+	var articles []string = make([]string, 0, len(files))
+	for _, f := range files {
+		name := f.Name()
+		//We add only names that don't start with a '.':
+		if name[0] != '.' {
+			l := len(articles)
+			articles = articles[0 : l+1]
+			articles[l] = name
 		}
-
-	} else {
-		var latestVersion string
-		filename := "./articles/" + title
-		file, err := os.Open(filename)
-		versions := make(map[string]*Page)
-		defer file.Close()
-		if err != nil {
-			return nil, err
-		}
-		decoder := json.NewDecoder(file)
-		decoder.Decode(&versions)
-		var keys string
-		for k := range versions {
-			if k > keys {
-				keys = k
-			}
-		}
-		//sort.Strings(keys)
-
-		latestVersion = keys
-		page := versions[latestVersion]
-		return page, nil
-
 	}
+	//We use an anonymous struct for rendering:
+	data := struct {
+		Title       string
+		MenuEntries [][2]string
+		Articles    []string
+	}{
+		"start",
+		[][2]string{
+			{"Home", "/view/start"},
+			{"Users", "/users"},
+			{"Files", "/files"},
+		},
+		articles,
+	}
+	startTemplates.ExecuteTemplate(w, "main", &data)
+}
 
-	return &Page{Title: title, Body: body, DisplayBody: dBody, Information: information}, nil
+func loadPage(title string) (*Page, error) {
+	//Reading an article from disk:
+	filename := "./articles/" + title
+	file, err := os.Open(filename)
+	//Map of versions expected in the article:
+	versions := make(map[string]*Page)
+	defer file.Close()
+	//Forwarding errors to caller:
+	if err != nil {
+		return nil, err
+	}
+	//Decoding file contents:
+	decoder := json.NewDecoder(file)
+	decoder.Decode(&versions)
+	//Finding latest version:
+	var keys string
+	for k := range versions {
+		if k > keys {
+			keys = k
+		}
+	}
+	return versions[keys], nil
 }
 
 func ViewHandler(w http.ResponseWriter, r *http.Request, title string) {
 	fmt.Println("entering viewhandler now")
-	p, err := loadPage(title)
-	if err != nil {
-		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
-		return
-	}
-	if title != "start" {
-		renderTemplate(w, "view", p)
+	if title == "start" {
+		startPage(w)
 	} else {
-		renderTemplate(w, "startpage", p)
+		p, err := loadPage(title)
+		if err != nil {
+			http.Redirect(w, r, "/edit/"+title, http.StatusFound)
+			return
+		}
+		renderTemplate(w, "view", p)
 	}
 }
 
