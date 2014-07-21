@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var templates = template.Must(template.ParseFiles("./static/files.html", "./static/adminpage.html", "./static/edit.html", "./static/view.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html", "./static/users.html"))
+var templates = template.Must(template.ParseFiles("./static/files.html", "./static/adminpage.html", "./static/edit.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html", "./static/users.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view|vers|users)/([a-zA-Z0-9]+)$")
 var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
 var userPath = regexp.MustCompile("^/(users)(/)?$")
@@ -139,13 +139,35 @@ func loadPage(title string) (*Page, error) {
 	decoder := json.NewDecoder(file)
 	decoder.Decode(&versions)
 	//Finding latest version:
-	var keys string
+	var latest string
 	for k := range versions {
-		if k > keys {
-			keys = k
+		if k > latest {
+			latest = k
 		}
 	}
-	return versions[keys], nil
+	return versions[latest], nil
+}
+
+var pageTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu_view.html", "./static/templates/content_view.html"))
+
+func renderPage(w http.ResponseWriter, p *Page) {
+	data := struct {
+		Title       string
+		DisplayBody template.HTML
+		Information string
+		MenuEntries [][2]string
+	}{
+		p.Title,
+		p.DisplayBody,
+		p.Information,
+		[][2]string{
+			{"Home", "/view/start"},
+			{"Edit this Page!", "/edit/" + p.Title},
+			{"Users", "/Users"},
+			{"Files", "/Files"},
+		},
+	}
+	pageTemplates.ExecuteTemplate(w, "main", &data)
 }
 
 func ViewHandler(w http.ResponseWriter, r *http.Request, title string) {
@@ -158,7 +180,7 @@ func ViewHandler(w http.ResponseWriter, r *http.Request, title string) {
 			http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 			return
 		}
-		renderTemplate(w, "view", p)
+		renderPage(w, p)
 	}
 }
 
