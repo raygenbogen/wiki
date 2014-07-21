@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -31,6 +30,13 @@ type RenderData struct {
   MenuEntries [][2]string
 }
 
+type User struct {
+	Username string
+	Password string
+	Approvalstatus string
+	Adminstatus string
+}
+
 func Auth(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
@@ -38,75 +44,51 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		username := r.FormValue("username")
 		enteredPassword := r.FormValue("password")
-		f, err := os.OpenFile("./users/users", os.O_RDWR|os.O_CREATE, 0600)
-		fi, erro := os.OpenFile("./users/approvedusers", os.O_RDWR|os.O_CREATE, 0600)
-		if err != nil {
-			println("error opening the file")
-		}
-		if erro != nil {
+		filename := "./users/" + username
+		if _, err := os.Stat(filename); os.IsNotExist(err) {
+			renderAuth(w, "This User doesn't seem to exist!")
+			return
 
-		}
-		defer f.Close()
-		defer fi.Close()
-		decoder := json.NewDecoder(f)
-		approvaldecoder := json.NewDecoder(fi)
-		users := make(map[string]string)
-		approvedusers := make(map[string]string)
-		err = decoder.Decode(&users)
-		erro = approvaldecoder.Decode(&approvedusers)
-		if erro != nil {
-
-		}
-		if err != nil {
-			println("error decoding")
-			http.Redirect(w, r, "/register", http.StatusFound)
-		} else {
-			if _, ok := users[username]; ok {
-
-				println("user is there")
-				if _, okay := approvedusers[username]; okay {
-					println("user is also in approvedusers")
-					stateofapproval := approvedusers[username]
-					if stateofapproval != "approved" {
-						println("not approved")
-						renderAuth(w, "You are not yet approved! Please contact one of the Administrators!")
-					}
-				}
-				storedPassword := users[username]
-				err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(enteredPassword))
+    		
+		}else{
+			file, erro := os.Open(filename)
+    		if erro != nil {
+    			println("Error opening the file")
+    		}
+    		defer file.Close()
+    		decoder := json.NewDecoder(file)
+    		var user User
+    		err := decoder.Decode(&user)
+    		if err != nil {
+    			println("Error decoding json")
+    		}
+    		if user.Approvalstatus == "approved"{
+    			err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(enteredPassword))
 				if err != nil {
-					println("password is wrong")
 					renderAuth(w, "Wrong Password!")
 
 				} else {
-					//do cookie stuff
 					t := time.Now()
 					expiration := time.Now().AddDate(1, 0, 0)
-					fmt.Println(expiration)
-					//expirationexpiration.Year += 1
 					h := md5.New()
 					const layout = "2006-01-02 15:04:05"
 					hashedTime := t.Format(layout)
-					hashedStoredPassword := hex.EncodeToString(h.Sum([]byte(storedPassword)))
+					hashedStoredPassword := hex.EncodeToString(h.Sum([]byte(user.Password)))
 					cookie := http.Cookie{Name: "User", Value: username, Path: "/", Expires: expiration}
 					cookie2 := http.Cookie{Name: hashedStoredPassword, Value: hashedTime, Path: "/", Expires: expiration}
 					http.SetCookie(w, &cookie)
 					http.SetCookie(w, &cookie2)
-					fmt.Println(cookie.Value)
-					fmt.Println(cookie2.Name)
 					http.Redirect(w, r, "/view/start", http.StatusFound)
 
 				}
 
-			} else {
-				println("guessing not ok?")
-				http.Redirect(w, r, "/register/", http.StatusFound)
-			}
+    		}else{
+    			renderAuth(w, "You are not approved. Please contact the Administrator!")
+    		}
 		}
-
 	}
-
 }
+
 func renderAuth(w http.ResponseWriter, message string) {
     templates.ExecuteTemplate(w, "main", &RenderData{
       "Login",
@@ -121,7 +103,7 @@ func renderAuth(w http.ResponseWriter, message string) {
     })
 }
 
-func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+func Register(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 
 	case "GET":
@@ -129,81 +111,34 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		username := r.FormValue("username")
 		password := r.FormValue("password")
-		println(username)
-		println(password)
 		if len(password) < 8 {
-			println("more letters")
-			renderRegister(w, "More Letters.Do it.Do it Now!")
+			renderRegister(w, "Please choose a password with at least 8 characters!")
 			return
 		}
-
-		//some error handling
-		f, err := os.OpenFile("./users/users", os.O_RDWR|os.O_CREATE, 0600)
-		fi, erro := os.OpenFile("./users/admins", os.O_RDWR|os.O_CREATE, 0600)
-		fil, er := os.OpenFile("./users/approvedusers", os.O_RDWR|os.O_CREATE, 0600)
-		if erro != nil {
-			println("no adminsFile")
-		}
-		if er != nil {
-
-		}
-
-		defer fil.Close()
-		defer fi.Close()
-
-		//some error handling
+		cryptPassword, err := Crypt([]byte(password))
 		if err != nil {
-			println("where is this file everyone's talking about?")
+			println("Error encrypting the password")
+		}
+		
+		user := &User{Username: username, Password: string(cryptPassword), Approvalstatus: "not approved", Adminstatus: "user"}
+		filename := "./users/" + user.Username
+		jsoneduser, err := json.Marshal(user)
+		if err != nil {
+			println("error making json out of user")
+		}
+		if _, err := os.Stat(filename); os.IsNotExist(err) {
+    		file, erro := os.Create(filename)
+    		if erro != nil {
+    			println("couldn't create the file")
+    		}
+    		defer file.Close()
+    		ioutil.WriteFile(filename, jsoneduser, 0600)
+			http.Redirect(w, r, "/auth/", http.StatusFound)
+		}else{
+			renderRegister(w, "This User already exists!")
 			return
-
 		}
-		defer f.Close()
-		decoder := json.NewDecoder(f)
-		admindecoder := json.NewDecoder(fi)
-		approvaldecoder := json.NewDecoder(fil)
-		users := make(map[string]string)
-		admins := make(map[string]string)
-		approvedusers := make(map[string]string)
-		err = decoder.Decode(&users)
-		erro = admindecoder.Decode(&admins)
-		er = approvaldecoder.Decode(&approvedusers)
-		if err != nil {
-			println("error decoding")
-		} else {
-			if _, ok := users[username]; ok {
-				renderRegister(w, "User already exists!")
-				println("user already exists")
-
-			} else {
-
-				cryptPassword, err := Crypt([]byte(password))
-				if err != nil {
-					//log.Fatal(err)
-				}
-				users[username] = string(cryptPassword)
-				admins[username] = "IsNotAdmin"
-				approvedusers[username] = "NotYetApproved"
-			}
-		}
-		jsonedadmins, er := json.Marshal(admins)
-		jsonedapprovals, erro := json.Marshal(approvedusers)
-		jsonedusers, err := json.Marshal(users)
-		println(string(jsonedusers))
-		if err != nil {
-			println("did we jsoned the users yet?")
-
-		}
-		if er != nil {
-
-		}
-		if erro != nil {
-
-		}
-		ioutil.WriteFile("./users/users", jsonedusers, 0600)
-		f.Close()
-		ioutil.WriteFile("./users/approvedusers", jsonedapprovals, 0600)
-		ioutil.WriteFile("./users/admins", jsonedadmins, 0600)
-		http.Redirect(w, r, "/auth/", http.StatusFound)
+		
 	}
 }
 
@@ -230,61 +165,37 @@ func Crypt(password []byte) ([]byte, error) {
 
 func Chkauth(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("do i even enter this function?")
-		if r == nil {
-			fmt.Println("there is no request.ficken")
-		}
 		cookie, err := r.Cookie("User")
-
 		if err != nil {
-			fmt.Println("i'm not reading anything cookielike")
-			fmt.Println(err)
 			http.Redirect(w, r, "/auth/", http.StatusFound)
 			return
-
 		}
-		fmt.Println(cookie.Name)
 		username := cookie.Value
-		file, err := os.OpenFile("./users/users", os.O_RDWR|os.O_CREATE, 0600)
-		if err != nil {
-			println("error opening the file")
-		}
-		defer file.Close()
-		decoder := json.NewDecoder(file)
-		users := make(map[string]string)
-		err = decoder.Decode(&users)
-
-		if err != nil {
-			println("error decoding")
-			http.Redirect(w, r, "/auth", http.StatusFound)
-		} else {
-			if _, ok := users[username]; ok {
-				println("user is there")
-				storedPassword := users[username]
-				h := md5.New()
-				hashedStoredPassword := hex.EncodeToString(h.Sum([]byte(storedPassword)))
-				_, err := r.Cookie(hashedStoredPassword)
-				if err != nil {
-					println("no cookie found")
-					http.Redirect(w, r, "/auth/", http.StatusFound)
-					return
-				}
-				approvalfile, err := os.OpenFile("./users/approvedusers", os.O_RDWR|os.O_CREATE, 0600)
-				if err != nil {
-					println("error opening the file")
-				}
-				defer approvalfile.Close()
-				approvaldecoder := json.NewDecoder(approvalfile)
-				approvedusers := make(map[string]string)
-				err = approvaldecoder.Decode(&approvedusers)
-				approvalstatus := approvedusers[username]
-				println(approvalstatus)
-				if approvalstatus != "approved" {
-					http.Redirect(w, r, "/auth", http.StatusFound)
-				}
-
-			} else {
-				println("no user found")
+		filename := "./users/" + username
+		if _, err := os.Stat(filename); os.IsNotExist(err) {
+			http.Redirect(w,r, "/auth/", http.StatusFound)
+			return
+		}else{
+			file, erro := os.Open(filename)
+    		if erro != nil {
+    			println("Error opening the file")
+    		}
+    		defer file.Close()
+    		decoder := json.NewDecoder(file)
+    		var user User
+    		err := decoder.Decode(&user)
+    		if err != nil {
+    			println("Error decoding json")
+    		}
+			h := md5.New()
+			hashedStoredPassword := hex.EncodeToString(h.Sum([]byte(user.Password)))
+			_, err = r.Cookie(hashedStoredPassword)
+			if err != nil {
+				println("no cookie found")
+				http.Redirect(w, r, "/auth/", http.StatusFound)
+				return
+			}
+			if user.Approvalstatus != "approved" {
 				http.Redirect(w, r, "/auth", http.StatusFound)
 			}
 		}
