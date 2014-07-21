@@ -4865,3 +4865,10 @@ button.close {
   position: fixed;
 }
 body { padding-top: 50px; }
+#versions {
+  float: right;
+  overflow-y:hidden;
+  height: 90%;
+  width:85%;
+  frameborder:0;
+}

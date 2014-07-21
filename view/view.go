@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var templates = template.Must(template.ParseFiles("./static/files.html", "./static/adminpage.html", "./static/upload.html", "./static/version.html", "./static/specificversion.html", "./static/users.html"))
+var templates = template.Must(template.ParseFiles("./static/files.html", "./static/adminpage.html", "./static/upload.html", "./static/users.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view|vers|users)/([a-zA-Z0-9]+)$")
 var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
 var userPath = regexp.MustCompile("^/(users)(/)?$")
@@ -51,13 +51,9 @@ func MakeVersionHandler(fn func(http.ResponseWriter, *http.Request, string, *str
 	return func(w http.ResponseWriter, r *http.Request) {
 		println(r.URL.Path)
 		m := versPath.FindStringSubmatch(r.URL.Path)
-		println(m)
 		if m == nil {
-			println(m)
 			n := validPath.FindStringSubmatch(r.URL.Path)
-			println(n)
 			if n == nil {
-				println(n)
 				http.Redirect(w, r, "/view/start", http.StatusFound)
 				return
 			}
@@ -249,8 +245,10 @@ func HandlerToHandleFunc(handler http.Handler) http.HandlerFunc {
 	}
 }
 
+var versionTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_version.html"))
+var specificVersionTemplates = template.Must(template.ParseFiles("./static/templates/main_specificVersion.html", "./static/templates/head.html", "./static/templates/content_view.html"))
+
 func VersionHandler(w http.ResponseWriter, r *http.Request, title string, version *string) {
-	var dBody template.HTML
 	filename := "./articles/" + title
 	file, err := os.Open(filename)
 	if err != nil {
@@ -261,28 +259,30 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 
 	decoder := json.NewDecoder(file)
 	decoder.Decode(&versions)
-	//var keys string
 
 	if version == nil {
-		var olderVersions string
 		keys := make([]string, 0, len(versions))
 		for k := range versions {
 			keys = append(keys, k)
 
 		}
 		sort.Strings(keys)
-		for k := range keys {
-			HTMLAttr := "<li><a href=\"/vers/" + title + "/" + keys[k] + "\" target=\"versions\">" + keys[k] + "</a></li>"
-			println(keys[k])
-			olderVersions = HTMLAttr + olderVersions
+		data := struct {
+			Title       string
+			Versions    []string
+			MenuEntries [][2]string
+		}{
+			title,
+			keys,
+			[][2]string{
+				{"Home", "/view/start"},
+				{title, "/view/" + title},
+				{"Files", "/files"},
+			},
 		}
-		dBody += template.HTML(olderVersions)
-		renderTemplate(w, "version", &Page{Title: title, DisplayBody: dBody})
+		versionTemplates.ExecuteTemplate(w, "main", &data)
 	} else {
-		println(version)
-		page := versions[*version]
-		dBody := page.DisplayBody
-		renderTemplate(w, "specificversion", &Page{Title: title, DisplayBody: dBody})
+		specificVersionTemplates.ExecuteTemplate(w, "main", versions[*version])
 	}
 
 }
