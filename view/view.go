@@ -17,13 +17,7 @@ import (
 )
 
 var templates = template.Must(template.ParseFiles("./static/files.html", "./static/adminpage.html", "./static/upload.html", "./static/users.html"))
-var validPath = regexp.MustCompile("^/(edit|save|view|vers|users)/([a-zA-Z0-9]+)$")
-var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
-var userPath = regexp.MustCompile("^/(users)(/)?$")
-var filePath = regexp.MustCompile("^/(files)/(?)")
 var videoPath = regexp.MustCompile("^/(files)/(.+)[.](mkv|avi|webm|mp4|mpg|mpeg|wmv|ogg|mp3|flac)")
-var approvalPath = regexp.MustCompile("^/(changeApprovalstatus)/(.+)")
-var adminPath = regexp.MustCompile("^/(changeAdminstatus)/(.+)")
 
 type Page struct {
 	Title       string
@@ -398,7 +392,7 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 		replace := strings.NewReplacer("webm", "vtt")
 		subpath := replace.Replace(newpath)
 
-		HTMLAttr := "<tr><td><video width=\"100%\" height=\"80%\" preload=\"auto\" controls><source src=\"" + newpath + "\" type=video/webm /><track src=" + subpath + " kind=\"subtitle\" src=\"de-DE\" label=\"german\"/>Your browser does not support the video tag.</video></td></tr>"
+		HTMLAttr := "<tr><td align=\"center\" valign=\"middle\"><video width=\"1020\" height=\"720\" preload=\"auto\" controls><source src=\"" + newpath + "\" type=video/webm /><track src=" + subpath + " kind=\"subtitle\" src=\"de-DE\" label=\"german\"/>Your browser does not support the video tag.</video></td></tr>"
 		dBody = template.HTML(HTMLAttr)
 		renderTemplate(w, "files", &Page{Title: title, DisplayBody: dBody, Path: coolnewpath})
 	}

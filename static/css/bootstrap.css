@@ -269,8 +269,8 @@ body {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 14px;
   line-height: 1.428571429;
-  color: #000000;
-  background-color: #ffffff;
+  color: #ffffff;
+  background-color: #444444;
 }
 input,
 button,
@@ -282,12 +282,12 @@ textarea {
   font-weight: bold;
 }
 a {
-  color: #428bca;
+  color: #ffffff;
   text-decoration: none;
 }
 a:hover,
 a:focus {
-  color: #2a6496;
+  color: #dddddd;
   text-decoration: underline;
 }
 a:focus {
@@ -1414,7 +1414,7 @@ th {
   padding: 5px;
 }
 .table-bordered {
-  border: 1px solid #dddddd;
+  border: 1px solid #444444;
 }
 .table-bordered > thead > tr > th,
 .table-bordered > tbody > tr > th,
@@ -1422,7 +1422,7 @@ th {
 .table-bordered > thead > tr > td,
 .table-bordered > tbody > tr > td,
 .table-bordered > tfoot > tr > td {
-  border: 1px solid #dddddd;
+  border: 1px solid #222222;
 }
 .table-bordered > thead > tr > th,
 .table-bordered > thead > tr > td {
@@ -1430,11 +1430,11 @@ th {
 }
 .table-striped > tbody > tr:nth-child(odd) > td,
 .table-striped > tbody > tr:nth-child(odd) > th {
-  background-color: #f9f9f9;
+  background-color: #222222;
 }
 .table-hover > tbody > tr:hover > td,
 .table-hover > tbody > tr:hover > th {
-  background-color: #f5f5f5;
+  background-color: #555555;
 }
 table col[class*="col-"] {
   position: static;
@@ -1955,9 +1955,9 @@ fieldset[disabled] .btn {
 .btn-default:active,
 .btn-default.active,
 .open .dropdown-toggle.btn-default {
-  color: #333333;
+  color: #ffffff;
   background-color: #ebebeb;
-  border-color: #adadad;
+  border-color: #888888;
 }
 .btn-default:active,
 .btn-default.active,
@@ -1987,18 +1987,18 @@ fieldset[disabled] .btn-default.active {
   background-color: #fff;
 }
 .btn-primary {
-  color: #000000;
-  background-color: rgb(50, 84, 156);
-  border-color: #357ebd;
+  color: #ffffff;
+  background-color: #888888;
+  border-color: #000000;
 }
 .btn-primary:hover,
 .btn-primary:focus,
 .btn-primary:active,
 .btn-primary.active,
 .open .dropdown-toggle.btn-primary {
-  color: #DAE224;
-  background-color: #28247c;
-  border-color: #285e8e;
+  color: #ffffff;
+  background-color: #777777;
+  border-color: #ffffff;
 }
 .btn-primary:active,
 .btn-primary.active,
@@ -3228,7 +3228,7 @@ textarea.input-group-sm > .input-group-btn > .btn {
   margin-bottom: 0;
   padding-left: 0;
   list-style: none;
-  background-color: rgb(50, 84, 156);
+  background-color: #222222;
 }
 .nav:before,
 .nav:after {
@@ -3249,19 +3249,19 @@ textarea.input-group-sm > .input-group-btn > .btn {
 .nav > li {
   position: relative;
   display: block;
-  font-weight: bold;
+  font-weight: ;
 }
 .nav > li > a {
   position: relative;
   display: block;
   padding: 10px 15px;
-  color: #000000;
+  color: #ffffff;
 }
 .nav > li > a:hover,
 .nav > li > a:focus {
   text-decoration: none;
-  background-color: #28247c;
-  color: #DAE224;
+  background-color: #555555;
+  color: #ffffff;
 }
 .nav > li.disabled > a {
   color: #999999;
@@ -3278,13 +3278,13 @@ textarea.input-group-sm > .input-group-btn > .btn {
   position: relative;
   display: block;
   padding: 10px 15px;
-  color: #000000;
+  color: #ffffff;
 }
 .nav > li > input:hover,
 .nav > li > input:focus {
   text-decoration: none;
-  background: #28247c;
-  color: #DAE224;
+  background: #555555;
+  color: #ffffff;
 }
 
 
@@ -3334,8 +3334,8 @@ textarea.input-group-sm > .input-group-btn > .btn {
 .nav-tabs > li.active > a,
 .nav-tabs > li.active > a:hover,
 .nav-tabs > li.active > a:focus {
-  color: #DAE224;
-  background-color: #28247c;
+  color: #ffffff;
+  background-color: #444444;
   border: 1px solid #dddddd;
   border-bottom-color: transparent;
   cursor: default;
@@ -4865,10 +4865,3 @@ button.close {
   position: fixed;
 }
 body { padding-top: 50px; }
-#versions {
-  float: right;
-  overflow-y:hidden;
-  height: 90%;
-  width:85%;
-  frameborder:0;
-}

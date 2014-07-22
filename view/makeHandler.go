@@ -4,7 +4,17 @@ package view
 */
 import (
 	"net/http"
+	"regexp"
 )
+
+
+var validPath = regexp.MustCompile("^/(edit|save|view|vers|users)/([a-zA-Z0-9]+)$")
+var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
+var userPath = regexp.MustCompile("^/(users)(/)?$")
+var filePath = regexp.MustCompile("^/(files)/(?)")
+var approvalPath = regexp.MustCompile("^/(changeApprovalstatus)/(.+)")
+var adminPath = regexp.MustCompile("^/(changeAdminstatus)/(.+)")
+
 
 func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
