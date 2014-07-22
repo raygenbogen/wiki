@@ -115,7 +115,6 @@ func renderPage(w http.ResponseWriter, p *Page) {
 }
 
 func ViewHandler(w http.ResponseWriter, r *http.Request, title string) {
-	fmt.Println("entering viewhandler now")
 	if title == "start" {
 		startPage(w)
 	} else {
@@ -173,8 +172,6 @@ func SaveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	if err != nil {
 		fmt.Println("nicht jsoned")
 	}
-
-	//v := Version(versions)
 
 	ioutil.WriteFile(filename, out, 0600)
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
@@ -283,7 +280,6 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 }
 
 func ChangeAdminstatus(w http.ResponseWriter, r *http.Request, user string) {
-	println("starting func")
 	var visitor User
 	var specificUser User
 	cookie, err := r.Cookie("User")
@@ -305,7 +301,6 @@ func ChangeAdminstatus(w http.ResponseWriter, r *http.Request, user string) {
 	defer userfile.Close()
 	specificdecoder := json.NewDecoder(userfile)
 	err = specificdecoder.Decode(&specificUser)
-	println("decoding done")
 	if visitor.Adminstatus == "admin" {
 		if specificUser.Adminstatus == "admin" {
 			specificUser.Adminstatus = "user"
@@ -340,7 +335,7 @@ func ChangeApprovalstatus(w http.ResponseWriter, r *http.Request, user string) {
 	defer userfile.Close()
 	specificdecoder := json.NewDecoder(userfile)
 	err = specificdecoder.Decode(&specificUser)
-	println("decoding done")
+
 	if visitor.Adminstatus == "admin" {
 		if specificUser.Approvalstatus == "approved" {
 			specificUser.Approvalstatus = "not approved"
@@ -355,7 +350,6 @@ func ChangeApprovalstatus(w http.ResponseWriter, r *http.Request, user string) {
 
 func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 	replacer := strings.NewReplacer("files", "data/fileserver")
-	println(path)
 	newpath := replacer.Replace(path)
 	subpath := newpath
 	var coolnewpath template.HTML
@@ -365,7 +359,7 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 	}
 	for i := strings.Count(subpath, "/") - 3; i > 0; i-- {
 		basepath := filepath.Dir(subpath)
-		println(basepath)
+
 		replacer := strings.NewReplacer("data/fileserver", "files")
 		basepath = replacer.Replace(basepath)
 		subpath = basepath

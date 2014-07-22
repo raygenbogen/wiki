@@ -12,35 +12,28 @@ import (
 	"time"
 )
 
-/*type Users struct {
-	Username string
-	Password string
-	Approved string
-	Admin string
-}*/
-
 var templates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_auth.html"))
 
 type RenderData struct {
-  Title string
-  Headline string
-  Message string
-  Action string
-  Submit string
-  MenuEntries [][2]string
+	Title       string
+	Headline    string
+	Message     string
+	Action      string
+	Submit      string
+	MenuEntries [][2]string
 }
 
 type User struct {
-	Username string
-	Password string
+	Username       string
+	Password       string
 	Approvalstatus string
-	Adminstatus string
+	Adminstatus    string
 }
 
 func Auth(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-    renderAuth(w, "")
+		renderAuth(w, "")
 	case "POST":
 		username := r.FormValue("username")
 		enteredPassword := r.FormValue("password")
@@ -49,21 +42,20 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 			renderAuth(w, "This User doesn't seem to exist!")
 			return
 
-    		
-		}else{
+		} else {
 			file, erro := os.Open(filename)
-    		if erro != nil {
-    			println("Error opening the file")
-    		}
-    		defer file.Close()
-    		decoder := json.NewDecoder(file)
-    		var user User
-    		err := decoder.Decode(&user)
-    		if err != nil {
-    			println("Error decoding json")
-    		}
-    		if user.Approvalstatus == "approved"{
-    			err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(enteredPassword))
+			if erro != nil {
+				println("Error opening the file")
+			}
+			defer file.Close()
+			decoder := json.NewDecoder(file)
+			var user User
+			err := decoder.Decode(&user)
+			if err != nil {
+				println("Error decoding json")
+			}
+			if user.Approvalstatus == "approved" {
+				err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(enteredPassword))
 				if err != nil {
 					renderAuth(w, "Wrong Password!")
 
@@ -82,25 +74,25 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 
 				}
 
-    		}else{
-    			renderAuth(w, "You are not approved. Please contact the Administrator!")
-    		}
+			} else {
+				renderAuth(w, "You are not approved. Please contact the Administrator!")
+			}
 		}
 	}
 }
 
 func renderAuth(w http.ResponseWriter, message string) {
-    templates.ExecuteTemplate(w, "main", &RenderData{
-      "Login",
-      "Login",
-      message,
-      "/auth/",
-      "Login",
-      [][2]string{
-        {"Home", "/view/start"},
-        {"Create Account", "/register"},
-      },
-    })
+	templates.ExecuteTemplate(w, "main", &RenderData{
+		"Login",
+		"Login",
+		message,
+		"/auth/",
+		"Login",
+		[][2]string{
+			{"Home", "/view/start"},
+			{"Create Account", "/register"},
+		},
+	})
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
@@ -119,7 +111,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			println("Error encrypting the password")
 		}
-		
+
 		user := &User{Username: username, Password: string(cryptPassword), Approvalstatus: "not approved", Adminstatus: "user"}
 		filename := "./users/" + user.Username
 		jsoneduser, err := json.Marshal(user)
@@ -127,30 +119,30 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			println("error making json out of user")
 		}
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
-    		file, erro := os.Create(filename)
-    		if erro != nil {
-    			println("couldn't create the file")
-    		}
-    		defer file.Close()
-    		ioutil.WriteFile(filename, jsoneduser, 0600)
+			file, erro := os.Create(filename)
+			if erro != nil {
+				println("couldn't create the file")
+			}
+			defer file.Close()
+			ioutil.WriteFile(filename, jsoneduser, 0600)
 			http.Redirect(w, r, "/auth/", http.StatusFound)
-		}else{
+		} else {
 			renderRegister(w, "This User already exists!")
 			return
 		}
-		
+
 	}
 }
 
 func renderRegister(w http.ResponseWriter, message string) {
-    templates.ExecuteTemplate(w, "main", &RenderData{
-      "Create Account",
-      "Register",
-      message,
-      "/register/",
-      "Create",
-      [][2]string{{"Home", "/view/start"}},
-    })
+	templates.ExecuteTemplate(w, "main", &RenderData{
+		"Create Account",
+		"Register",
+		message,
+		"/register/",
+		"Create",
+		[][2]string{{"Home", "/view/start"}},
+	})
 }
 
 func clear(b []byte) {
@@ -173,20 +165,20 @@ func Chkauth(f http.HandlerFunc) http.HandlerFunc {
 		username := cookie.Value
 		filename := "./users/" + username
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
-			http.Redirect(w,r, "/auth/", http.StatusFound)
+			http.Redirect(w, r, "/auth/", http.StatusFound)
 			return
-		}else{
+		} else {
 			file, erro := os.Open(filename)
-    		if erro != nil {
-    			println("Error opening the file")
-    		}
-    		defer file.Close()
-    		decoder := json.NewDecoder(file)
-    		var user User
-    		err := decoder.Decode(&user)
-    		if err != nil {
-    			println("Error decoding json")
-    		}
+			if erro != nil {
+				println("Error opening the file")
+			}
+			defer file.Close()
+			decoder := json.NewDecoder(file)
+			var user User
+			err := decoder.Decode(&user)
+			if err != nil {
+				println("Error decoding json")
+			}
 			h := md5.New()
 			hashedStoredPassword := hex.EncodeToString(h.Sum([]byte(user.Password)))
 			_, err = r.Cookie(hashedStoredPassword)
