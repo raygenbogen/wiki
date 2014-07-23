@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var templates = template.Must(template.ParseFiles("./static/files.html", "./static/adminpage.html", "./static/upload.html", "./static/users.html"))
+var templates = template.Must(template.ParseFiles("./static/files.html", "./static/upload.html"))
 var videoPath = regexp.MustCompile("^/(files)/(.+)[.](mkv|avi|webm|mp4|mpg|mpeg|wmv|ogg|mp3|flac)")
 
 type Page struct {
@@ -229,8 +229,9 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 
 }
 
+var userTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_users.html"))
+
 func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
-	var dBody template.HTML
 	cookie, err := r.Cookie("User")
 	if err != nil {
 		return
@@ -238,45 +239,49 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 	username := cookie.Value
 	file, err := os.Open("./users/" + username)
 	if err != nil {
-		println("error opening the file")
+		fmt.Printf("Could not open file for user: %s\n", username)
 	}
 	defer file.Close()
 	decoder := json.NewDecoder(file)
 	var visitor User
 	err = decoder.Decode(&visitor)
-	var userlist string
-	if visitor.Adminstatus == "admin" {
-		userfiles, _ := ioutil.ReadDir("./users")
-		for _, users := range userfiles {
-			var specificUser User
-			userfile, err := os.Open("./users/" + users.Name())
-			if err != nil {
-				println("error opening the file")
-			}
-			decoder = json.NewDecoder(userfile)
-			err = decoder.Decode(&specificUser)
-			HTMLAttr := "<tr><td>" + specificUser.Username + "</td><td><form action=\"/changeApprovalstatus/" + specificUser.Username + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + specificUser.Approvalstatus + "</button></form></td><td><form action=\"/changeAdminstatus/" + specificUser.Username + "\" method=\"post\"><button type=\"submit\" class=\"btn btn-primary\">" + specificUser.Adminstatus + "</button></form></td></tr>"
-			userlist = userlist + HTMLAttr
-
-		}
-		dBody += template.HTML(userlist)
-		renderTemplate(w, "adminpage", &Page{DisplayBody: dBody})
-	} else {
-		userfiles, _ := ioutil.ReadDir("./users")
-		for _, users := range userfiles {
-			var specificUser User
-			userfile, err := os.Open("./users/" + users.Name())
-			if err != nil {
-				println("error opening the file")
-			}
-			decoder = json.NewDecoder(userfile)
-			err = decoder.Decode(&specificUser)
-			HTMLAttr := "<tr><td>" + specificUser.Username + "</td></tr>"
-			userlist = userlist + HTMLAttr
-		}
-		dBody += template.HTML(userlist)
-		renderTemplate(w, "users", &Page{DisplayBody: dBody})
+	if err != nil {
+		fmt.Printf("Could not decode json for user: %s\n", username)
 	}
+	//Reading in the userlist:
+	userfiles, _ := ioutil.ReadDir("./users")
+	userlist := make([]User, 0, len(userfiles))
+	for _, u := range userfiles {
+		if u.Name()[0] != '.' {
+			userfile, err := os.Open("./users/" + u.Name())
+			if err != nil {
+				fmt.Printf("Error opening file for user: %s\n", u.Name())
+			}
+			var user User
+			decoder = json.NewDecoder(userfile)
+			err = decoder.Decode(&user)
+			if err != nil {
+				fmt.Printf("Error decoding JSON in user file: %s\n", u.Name())
+			}
+			userlist = append(userlist, user)
+		}
+	}
+	//Composing data to render, and rendering:
+	data := struct {
+		Title       string
+		MenuEntries [][2]string
+		ShowAdmin   bool
+		Users       []User
+	}{
+		"Overview of users",
+		[][2]string{
+			{"Home", "/view/start"},
+			{"Files", "/files"},
+		},
+		visitor.Adminstatus == "admin",
+		userlist,
+	}
+	userTemplates.ExecuteTemplate(w, "main", &data)
 }
 
 func ChangeAdminstatus(w http.ResponseWriter, r *http.Request, user string) {

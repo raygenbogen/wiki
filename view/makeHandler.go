@@ -1,12 +1,13 @@
 package view
+
 /**
   This package defines different proxyfunctions that produce a http.HandlerFunc.
 */
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 )
-
 
 var validPath = regexp.MustCompile("^/(edit|save|view|vers|users)/([a-zA-Z0-9]+)$")
 var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
@@ -14,7 +15,6 @@ var userPath = regexp.MustCompile("^/(users)(/)?$")
 var filePath = regexp.MustCompile("^/(files)/(?)")
 var approvalPath = regexp.MustCompile("^/(changeApprovalstatus)/(.+)")
 var adminPath = regexp.MustCompile("^/(changeAdminstatus)/(.+)")
-
 
 func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +38,7 @@ func MakeVersionHandler(fn func(http.ResponseWriter, *http.Request, string, *str
 				http.Redirect(w, r, "/view/start", http.StatusFound)
 				return
 			}
-			// list all versions of an articles
+			// list all versions of an article
 			fn(w, r, n[2], nil)
 		} else {
 			// show specific version
@@ -50,13 +50,10 @@ func MakeVersionHandler(fn func(http.ResponseWriter, *http.Request, string, *str
 func MakeUserHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := validPath.FindStringSubmatch(r.URL.Path)
-		println(r.URL.Path)
 		if m == nil {
-			println("not a valid path")
 			n := userPath.FindStringSubmatch(r.URL.Path)
 			if n == nil {
-				println("not even a users path")
-				println(n)
+				fmt.Printf("MakeUserHandler encountered an invalid path: %s\n", r.URL.Path)
 				http.Redirect(w, r, "/users/", http.StatusFound)
 				return
 			}
