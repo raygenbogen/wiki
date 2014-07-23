@@ -386,7 +386,7 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 		replace := strings.NewReplacer("webm", "vtt")
 		subpath := replace.Replace(newpath)
 
-		HTMLAttr := "<tr><td align=\"center\" valign=\"middle\"><video width=\"1020\" height=\"720\" preload=\"auto\" controls><source src=\"" + newpath + "\" type=video/webm /><track src=" + subpath + " kind=\"subtitle\" src=\"de-DE\" label=\"german\"/>Your browser does not support the video tag.</video></td></tr>"
+		HTMLAttr := "<tr><td align=\"center\" valign=\"middle\"><video width=\"1280\" height=\"720\" preload=\"auto\" controls><source src=\"" + newpath + "\" type=video/webm /><track src=" + subpath + " kind=\"subtitle\" src=\"de-DE\" label=\"german\"/>Your browser does not support the video tag.</video></td></tr>"
 		dBody = template.HTML(HTMLAttr)
 		renderTemplate(w, "files", &Page{Title: title, DisplayBody: dBody, Path: coolnewpath})
 	}
