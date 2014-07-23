@@ -1,0 +1,13 @@
+{{define "menu"}}
+<nav class="navbar navbar-fixed-top" role="navigation">
+  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+    <ul class="nav nav-tabs">
+      {{range $entry := .MenuEntries}}
+      <li><a href="{{index $entry 1}}">{{index $entry 0}}</a></li>
+      {{end}}{{range .Path}}
+      <li class="active"><a href="{{.}}">{{.}}</a></li>
+      {{end}}
+    </ul>
+  </div>
+</nav>
+{{end}}

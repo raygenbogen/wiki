@@ -1,0 +1,29 @@
+{{define "content"}}
+<table class="table table-bordered table-striped">
+  <thead>
+    <tr>
+      <th>{{.Title}}</th>
+    </tr>
+  </thead>
+ 	<tbody> 
+  {{range .Directory}}
+    <tr>
+      <td>
+        <a href="{{.Path}}/{{.Name}}">{{.Name}}</a>
+      </td>
+    </tr>
+  {{end}}
+  {{if .File}}
+    <tr>
+      <td align="center" valign="middle">
+        <video width="1280" height="720" preload="auto" controls>
+          <source src="{{.Source}}" type="video/webm">
+          <track src="{{.Subpath}}" kind="subtitle" src="de-DE" label="german">
+          Your browser does not support the video tag.
+        </video>
+      </td>
+    </tr>
+  {{end}}
+ 	</tbody>
+</table>
+{{end}}

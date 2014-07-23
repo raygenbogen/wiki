@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var templates = template.Must(template.ParseFiles("./static/files.html", "./static/upload.html"))
+var templates = template.Must(template.ParseFiles("./static/files.html"))
 var videoPath = regexp.MustCompile("^/(files)/(.+)[.](mkv|avi|webm|mp4|mpg|mpeg|wmv|ogg|mp3|flac)")
 
 type Page struct {

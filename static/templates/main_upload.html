@@ -1,0 +1,13 @@
+{{define "main"}}
+<!DOCTYPE html>
+<html>
+{{template "head" .}}
+  <body>
+    {{if .Message}}<div class="message">{{.}}</div>{{end}}
+    <form class="form-signin" method="post" action="/upload/" enctype="multipart/form-data">
+      <input type="file" name="myfiles" id="myfiles" multiple="multiple" required>
+      <input type="submit" name="submit" value="Submit">
+    </form>
+  </body>
+</html>
+{{end}}

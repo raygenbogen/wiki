@@ -13,17 +13,24 @@ import (
 
 var hashedTime string
 var validType = regexp.MustCompile("^.*.(gif|jpeg|jpg)$")
-var templates = template.Must(template.ParseFiles("./static/upload.html"))
+var uploadTemplates = template.Must(template.ParseFiles("./static/templates/head.html", "./static/templates/main_upload.html"))
 
-func renderUpload(w http.ResponseWriter, tmpl string, data interface{}) {
-	templates.ExecuteTemplate(w, "upload.html", data)
+func renderUpload(w http.ResponseWriter, message string) {
+  data := struct {
+    Title string
+    Message string
+  }{
+    "Upload",
+    message,
+  }
+  uploadTemplates.ExecuteTemplate(w, "main", &data)
 }
 
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 
 	case "GET":
-		renderUpload(w, "upload", nil)
+		renderUpload(w, "")
 
 	case "POST":
 
@@ -74,8 +81,6 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-
 		http.Redirect(w, r, "/data/upload/"+hashedTime, http.StatusFound)
-
 	}
 }
