@@ -108,7 +108,7 @@ func renderPage(w http.ResponseWriter, p *Page) {
 			{"Home", "/view/start"},
 			{"Edit this Page!", "/edit/" + p.Title},
 			{"Users", "/Users"},
-			{"Files", "/Files"},
+			{"Files", "/files"},
 		},
 	}
 	pageTemplates.ExecuteTemplate(w, "main", &data)
