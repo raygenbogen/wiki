@@ -4,8 +4,11 @@
     <ul class="nav nav-tabs">
       {{range $entry := .MenuEntries}}
       <li><a href="{{index $entry 1}}">{{index $entry 0}}</a></li>
-      {{end}}{{range .Path}}
-      <li class="active"><a href="{{.}}">{{.}}</a></li>
+      {{end}}
+      {{range $path := .Path}}
+      <li {{if $path.Active}}class="active"{{end}}>
+        <a href="{{$path.Href}}">{{$path.Text}}</a>
+      </li>
       {{end}}
     </ul>
   </div>

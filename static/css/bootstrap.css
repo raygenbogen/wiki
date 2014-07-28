@@ -4865,3 +4865,9 @@ button.close {
   position: fixed;
 }
 body { padding-top: 50px; }
+body > footer {
+  position: fixed;
+  bottom: 0px;
+  right: 0px;
+  background-color: #444;
+}
