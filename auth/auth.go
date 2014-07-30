@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var templates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_auth.html"))
+var templates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_auth.html", "./static/templates/footer.html"))
 
 type RenderData struct {
 	Title       string
