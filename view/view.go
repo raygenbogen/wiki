@@ -16,9 +16,6 @@ import (
 	"time"
 )
 
-var templates = template.Must(template.ParseFiles("./static/files.html"))
-var videoPath = regexp.MustCompile("^/(files)/(.+)[.](mkv|avi|webm|mp4|mpg|mpeg|wmv|ogg|mp3|flac)")
-
 type Page struct {
 	Title       string
 	Body        string
@@ -36,7 +33,7 @@ type User struct {
 
 type Version map[string]*Page
 
-var startTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_start.html"))
+var startTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_start.html", "./static/templates/footer.html"))
 
 func startPage(w http.ResponseWriter) {
 	files, _ := ioutil.ReadDir("./articles/")
@@ -92,7 +89,7 @@ func loadPage(title string) (*Page, error) {
 	return versions[latest], nil
 }
 
-var pageTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu_view.html", "./static/templates/content_view.html"))
+var pageTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu_view.html", "./static/templates/content_view.html", "./static/templates/footer.html"))
 
 func renderPage(w http.ResponseWriter, p *Page) {
 	data := struct {
@@ -127,7 +124,7 @@ func ViewHandler(w http.ResponseWriter, r *http.Request, title string) {
 	}
 }
 
-var editTemplates = template.Must(template.ParseFiles("./static/templates/main_edit.html", "./static/templates/head.html", "./static/templates/menu_edit.html", "./static/templates/content_view.html"))
+var editTemplates = template.Must(template.ParseFiles("./static/templates/main_edit.html", "./static/templates/head.html", "./static/templates/menu_edit.html", "./static/templates/content_view.html", "./static/templates/footer.html"))
 
 func EditHandler(w http.ResponseWriter, r *http.Request, title string) {
 	p, err := loadPage(title)
@@ -135,14 +132,6 @@ func EditHandler(w http.ResponseWriter, r *http.Request, title string) {
 		p = &Page{Title: title}
 	}
 	editTemplates.ExecuteTemplate(w, "main", p)
-}
-
-func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
-	err := templates.ExecuteTemplate(w, tmpl+".html", p)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 }
 
 func SaveHandler(w http.ResponseWriter, r *http.Request, title string) {
@@ -183,8 +172,8 @@ func HandlerToHandleFunc(handler http.Handler) http.HandlerFunc {
 	}
 }
 
-var versionTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_version.html"))
-var specificVersionTemplates = template.Must(template.ParseFiles("./static/templates/main_specificVersion.html", "./static/templates/head.html", "./static/templates/content_view.html"))
+var versionTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_version.html", "./static/templates/footer.html"))
+var specificVersionTemplates = template.Must(template.ParseFiles("./static/templates/main_specificVersion.html", "./static/templates/head.html", "./static/templates/content_view.html", "./static/templates/footer.html"))
 
 func VersionHandler(w http.ResponseWriter, r *http.Request, title string, version *string) {
 	filename := "./articles/" + title
@@ -229,7 +218,7 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 
 }
 
-var userTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_users.html"))
+var userTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_users.html", "./static/templates/footer.html"))
 
 func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 	cookie, err := r.Cookie("User")
@@ -353,47 +342,86 @@ func ChangeApprovalstatus(w http.ResponseWriter, r *http.Request, user string) {
 	http.Redirect(w, r, "/users/", http.StatusFound)
 }
 
+var videoPath = regexp.MustCompile("^/(files)/(.+)[.](mkv|avi|webm|mp4|mpg|mpeg|wmv|ogg|mp3|flac)")
+var subPath = regexp.MustCompile("^/files/(.*)$")
+var videoFile = regexp.MustCompile("^([^\\.][^/]*)\\.(mkv|avi|webm|mp4|mpg|mpeg|wmv|ogg|mp3|flac)$")
+
+var fileTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu_files.html", "./static/templates/content_files.html", "./static/templates/footer.html"))
+
 func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
-	replacer := strings.NewReplacer("files", "data/fileserver")
-	newpath := replacer.Replace(path)
-	subpath := newpath
-	var coolnewpath template.HTML
-	_, currentdirectory := filepath.Split(path)
-	if path != "/files/" {
-		coolnewpath = template.HTML("<li class=\"active\"><a href=\"" + currentdirectory + "\">" + currentdirectory + "</a></li>")
-	}
-	for i := strings.Count(subpath, "/") - 3; i > 0; i-- {
-		basepath := filepath.Dir(subpath)
-
-		replacer := strings.NewReplacer("data/fileserver", "files")
-		basepath = replacer.Replace(basepath)
-		subpath = basepath
-		_, lastpartofsubpath := filepath.Split(basepath)
-
-		HTMLAttr := "<li class \"active\"><a href=\"" + basepath + "\">" + lastpartofsubpath + "</a></li>"
-		coolnewpath = template.HTML(HTMLAttr) + coolnewpath
-
-	}
-	var dBody template.HTML
-	m := videoPath.FindStringSubmatch(path)
-	if m == nil {
-
-		files, _ := ioutil.ReadDir("." + newpath)
-		title := currentdirectory
-		for _, f := range files {
-
-			HTMLAttr := "<tr><td><a href=\"" + path + "/" + f.Name() + "\">" + f.Name() + "</a></td></tr>"
-			dBody += template.HTML(HTMLAttr)
+	matches := subPath.FindStringSubmatch(path)
+	if matches == nil || len(matches) < 2 {
+		fmt.Printf("Unexpected path in view.go:FileHandler: %s\n", path)
+	} else { // We've got a valid path:
+		pathParts := strings.Split(matches[1], "/")
+		//Building path for the menu:
+		type pathEntry struct {
+			Href, Text string
+			Active     bool
 		}
-		renderTemplate(w, "files", &Page{Title: title, DisplayBody: dBody, Path: coolnewpath})
-	} else {
-		title := currentdirectory
-		replace := strings.NewReplacer("webm", "vtt")
-		subpath := replace.Replace(newpath)
-
-		HTMLAttr := "<tr><td align=\"center\" valign=\"middle\"><video width=\"1280\" height=\"720\" preload=\"auto\" controls><source src=\"" + newpath + "\" type=video/webm /><track src=" + subpath + " kind=\"subtitle\" src=\"de-DE\" label=\"german\"/>Your browser does not support the video tag.</video></td></tr>"
-		dBody = template.HTML(HTMLAttr)
-		renderTemplate(w, "files", &Page{Title: title, DisplayBody: dBody, Path: coolnewpath})
+		menuPath := make([]pathEntry, 0, len(pathParts))
+		helper := "/files"
+		for _, p := range pathParts {
+			helper += "/" + p
+			if p == "" {
+				continue
+			}
+			menuPath = append(menuPath, pathEntry{helper, p, false})
+		}
+		if len(menuPath) > 0 {
+			menuPath[len(menuPath)-1].Active = true
+		}
+		//Reading directory data:
+		replacer := strings.NewReplacer("/files", "./data/fileserver")
+		localPath := replacer.Replace(path)
+		fInfos, err := ioutil.ReadDir(localPath)
+		type dirData struct{ Path, Name string }
+		var dirs []dirData
+		if err == nil {
+			dirs = make([]dirData, 0, len(fInfos))
+			for _, f := range fInfos {
+				//Filtering hidden files:
+				if len(f.Name()) > 0 && f.Name()[0] == '.' {
+					continue
+				}
+				//Adding to listed files:
+				dirs = append(dirs, dirData{path, f.Name()})
+			}
+		}
+		//Case we don't have a dir:
+		type videoData struct{ Source, Subpath string }
+		var video *videoData
+		if dirs == nil {
+			//Have we got a video file?
+			vFile, err := os.Stat(localPath)
+			if err == nil && videoFile.MatchString(vFile.Name()) {
+				video = &videoData{localPath[1:], ""}
+				vttPath := strings.Replace(localPath, filepath.Ext(localPath), ".vtt", 1)
+				_, err := os.Stat(vttPath)
+				if err == nil {
+					video.Subpath = vttPath[1:]
+				}
+			}
+		}
+		//Composing data to render, and rendering:
+		data := struct {
+			Title       string
+			MenuEntries [][2]string
+			Path        []pathEntry
+			Directory   []dirData
+			Video       *videoData
+		}{
+			"Files",
+			[][2]string{
+				{"Home", "/view/start"},
+				{"Users", "/users"},
+				{"Files", "/files"},
+			},
+			menuPath,
+			dirs,
+			video,
+		}
+		fileTemplates.ExecuteTemplate(w, "main", &data)
+		return
 	}
-
 }

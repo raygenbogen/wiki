@@ -4866,10 +4866,19 @@ button.close {
 }
 body { padding-top: 50px; }
 
+
 #versions{
   float:right;
   width:85%;
   height: 90%;
   overflow-y: hidden;
   margin-top: -50px;
+}
+
+body > footer {
+  position: fixed;
+  bottom: 0px;
+  right: 0px;
+  background-color: #444;
+
 }
