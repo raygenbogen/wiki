@@ -17,11 +17,18 @@
   {{if .Video}}
     <tr>
       <td align="center" valign="middle">
-        <video width="1280" height="720" preload="auto" controls>
+        <!--<video width="1280" height="720" preload="auto" controls>
           <source src="{{$v.Source}}" type="video/webm">
           {{if $v.Subpath}}<track src="{{$v.Subpath}}" kind="subtitle" src="de-DE" label="german">{{end}}
           Your browser does not support the video tag.
-        </video>
+        </video>-->
+        <video id="MY_VIDEO_1" class="video-js vjs-default-skin" controls
+          preload="auto" width="1280" height="720"
+          data-setup="{}">
+          <source src="{{$v.Source}}" type='video/webm'>
+          {{if $v.Subpath}}<track src="{{$v.Subpath}}" kind="subtitle" src="de-DE" label="german">{{end}}
+          <p class="vjs-no-js">To view this video please enable JavaScript, and consider upgrading to a web browser that <a href="http://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a></p>
+</video>
       </td>
     </tr>
   {{end}}
