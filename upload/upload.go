@@ -16,14 +16,14 @@ var validType = regexp.MustCompile("^.*.(gif|jpeg|jpg)$")
 var uploadTemplates = template.Must(template.ParseFiles("./static/templates/head.html", "./static/templates/main_upload.html"))
 
 func renderUpload(w http.ResponseWriter, message string) {
-  data := struct {
-    Title string
-    Message string
-  }{
-    "Upload",
-    message,
-  }
-  uploadTemplates.ExecuteTemplate(w, "main", &data)
+	data := struct {
+		Title   string
+		Message string
+	}{
+		"Upload",
+		message,
+	}
+	uploadTemplates.ExecuteTemplate(w, "main", &data)
 }
 
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
