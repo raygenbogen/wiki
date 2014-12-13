@@ -59,6 +59,7 @@ func startPage(w http.ResponseWriter) {
 			{"Home", "/view/start"},
 			{"Users", "/users"},
 			{"Files", "/files"},
+			{"Logout", "/logout"},
 		},
 		articles,
 	}

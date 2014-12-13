@@ -196,3 +196,38 @@ func Chkauth(f http.HandlerFunc) http.HandlerFunc {
 	}
 
 }
+
+func Logout(w http.ResponseWriter, r *http.Request){
+	expiration := time.Now()
+	invalidcookie := http.Cookie{Name: "User", Value: "expired", Path: "/", Expires: expiration}
+	cookie, err := r.Cookie("User")
+	if err != nil {
+		http.Redirect(w, r, "/auth/", http.StatusFound)
+		return
+	}
+	username := cookie.Value
+	filename := "./users/" + username
+	file, erro := os.Open(filename)
+	if erro != nil {
+		println("Error opening the file")
+	}
+	defer file.Close()
+	decoder := json.NewDecoder(file)
+	var user User
+	err = decoder.Decode(&user)
+	if err != nil {
+		println("Error decoding json")
+	}
+	h := md5.New()
+	hashedStoredPassword := hex.EncodeToString(h.Sum([]byte(user.Password)))
+	_, err = r.Cookie(hashedStoredPassword)
+	if err != nil {
+		println("no cookie found")
+		http.Redirect(w, r, "/auth/", http.StatusFound)
+		return
+	}
+	invalidcookie2 := http.Cookie{Name: hashedStoredPassword, Value: "expired", Path: "/", Expires: expiration}
+	http.SetCookie(w, &invalidcookie)
+	http.SetCookie(w, &invalidcookie2)
+	http.Redirect(w, r, "/view/start", http.StatusFound)
+}
