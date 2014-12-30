@@ -15,6 +15,7 @@ var userPath = regexp.MustCompile("^/(users)(/)?$")
 var filePath = regexp.MustCompile("^/(files)/(?)")
 var approvalPath = regexp.MustCompile("^/(changeApprovalstatus)/(.+)")
 var adminPath = regexp.MustCompile("^/(changeAdminstatus)/(.+)")
+var deleteuserpath = regexp.MustCompile("^/(remove)/(.+)")
 
 func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -84,6 +85,16 @@ func MakeApprovalHandler(fn func(http.ResponseWriter, *http.Request, string)) ht
 func MakeAdminHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := adminPath.FindStringSubmatch(r.URL.Path)
+		if m == nil {
+			return
+		}
+		fn(w, r, m[2])
+	}
+}
+
+func DeleteUserHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+	return func( w http.ResponseWriter, r *http.Request) {
+		m := deleteuserpath.FindStringSubmatch(r.URL.Path)
 		if m == nil {
 			return
 		}

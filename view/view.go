@@ -343,6 +343,14 @@ func ChangeApprovalstatus(w http.ResponseWriter, r *http.Request, user string) {
 	http.Redirect(w, r, "/users/", http.StatusFound)
 }
 
+func DeleteUser(w http.ResponseWriter, r *http.Request, user string) {
+	err := os.Remove("./users/" + user)
+	if err != nil {
+		println("error opening the file")
+	}
+	http.Redirect(w, r, "/users/", http.StatusFound)
+}
+
 var videoPath = regexp.MustCompile("^/(files)/(.+)[.](mkv|avi|webm|mp4|mpg|mpeg|wmv|ogg|mp3|flac)")
 var subPath = regexp.MustCompile("^/files/(.*)$")
 var videoFile = regexp.MustCompile("^([^\\.][^/]*)\\.(mkv|avi|webm|mp4|mpg|mpeg|wmv|ogg|mp3|flac)$")

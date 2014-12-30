@@ -21,6 +21,11 @@
           {{$u.Approvalstatus}}
           </button>
         </form>
+        <form action="/remove/{{$u.Username}}" method="post">
+          <button type="submit" class="btn btn-primary">
+          Delete User
+          </button>
+        </form>
       </td>
       <td>
         <form action="/changeAdminstatus/{{$u.Username}}" method="post">
@@ -29,6 +34,7 @@
           </button>
         </form>
       </td>
+      
       {{end}}
     </tr>
     {{end}}

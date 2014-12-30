@@ -28,6 +28,7 @@ func main() {
 	http.HandleFunc("/logout/", auth.Logout)
 	http.HandleFunc("/changeApprovalstatus/", auth.Chkauth(view.MakeApprovalHandler(view.ChangeApprovalstatus)))
 	http.HandleFunc("/changeAdminstatus/", auth.Chkauth(view.MakeAdminHandler(view.ChangeAdminstatus)))
+	http.HandleFunc("/remove/", auth.Chkauth(view.DeleteUserHandler(view.DeleteUser)))
 	http.HandleFunc("/register/", auth.Register)
 	http.HandleFunc("/auth/", auth.Auth)
 	http.Handle("/static/css/", view.HandlerToHandleFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/")))))

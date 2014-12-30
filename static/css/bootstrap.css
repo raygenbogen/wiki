@@ -1670,6 +1670,7 @@ textarea.form-control {
 }
 .form-group {
   margin-bottom: 15px;
+  display:inline-block
 }
 .radio,
 .checkbox {
@@ -4881,4 +4882,7 @@ body > footer {
   right: 0px;
   background-color: #444;
 
+}
+form {
+  display: inline;
 }
