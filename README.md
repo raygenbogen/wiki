@@ -13,7 +13,7 @@ installation
 * go build wiki.go
 
 running first time
-* ./wiki --host=$hostname (to create self signed certificate)
+* ./wiki --host $hostname (to create self signed certificate)
 
 announcements
 * dont use with root account
