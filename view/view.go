@@ -105,7 +105,7 @@ func renderPage(w http.ResponseWriter, p *Page) {
 		[][2]string{
 			{"Home", "/view/start"},
 			{"Edit this Page!", "/edit/" + p.Title},
-			{"Users", "/Users"},
+			{"Users", "/users"},
 			{"Files", "/files"},
 		},
 	}
