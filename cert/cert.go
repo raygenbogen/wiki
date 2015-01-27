@@ -102,7 +102,7 @@ func Start() {
 		return
 	}
 
-	certOut, err := os.Create("static/cert.pem")
+	certOut, err := os.Create("cert.pem")
 	if err != nil {
 		log.Fatalf("failed to open cert.pem for writing: %s", err)
 		return
@@ -111,7 +111,7 @@ func Start() {
 	certOut.Close()
 	log.Print("written cert.pem\n")
 
-	keyOut, err := os.OpenFile("static/key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	keyOut, err := os.OpenFile("key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		log.Print("failed to open key.pem for writing:", err)
 		return

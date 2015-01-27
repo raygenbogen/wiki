@@ -11,10 +11,10 @@ import (
 )
 
 func main() {
-	if _, certError := os.Stat("static/cert.pem"); os.IsNotExist(certError) {
+	if _, certError := os.Stat("cert.pem"); os.IsNotExist(certError) {
 		cert.Start()
 	}
-	if _, keyError := os.Stat("static/key.pem"); os.IsNotExist(keyError) {
+	if _, keyError := os.Stat("key.pem"); os.IsNotExist(keyError) {
 		cert.Start()
 	}
 	http.HandleFunc("/favicon.ico", handlerICon)
@@ -35,7 +35,7 @@ func main() {
 	http.Handle("/static/", auth.Chkauth(view.HandlerToHandleFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))))
 	http.Handle("/data/", auth.Chkauth(view.HandlerToHandleFunc(http.StripPrefix("/data/", http.FileServer(http.Dir("./data/"))))))
 	http.HandleFunc("/", view.MakeRedirectHandler("/view/start"))
-	if err := http.ListenAndServeTLS(":10443", "./static/cert.pem", "./static/key.pem", nil); err != nil {
+	if err := http.ListenAndServeTLS(":10443", "cert.pem", "key.pem", nil); err != nil {
 		log.Fatalf("ListenAndServeTLS error: %v", err)
 	}
 
