@@ -267,6 +267,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 		[][2]string{
 			{"Home", "/view/start"},
 			{"Files", "/files"},
+			{"Delete your own Account", "/remove/"+username},
 		},
 		visitor.Adminstatus == "admin",
 		userlist,
@@ -344,9 +345,25 @@ func ChangeApprovalstatus(w http.ResponseWriter, r *http.Request, user string) {
 }
 
 func DeleteUser(w http.ResponseWriter, r *http.Request, user string) {
-	err := os.Remove("./users/" + user)
+	var visitor User
+	cookie, err := r.Cookie("User")
+	if err != nil {
+		return
+	}
+	username := cookie.Value
+	visitorfile, err := os.Open("./users/" + username)
 	if err != nil {
 		println("error opening the file")
+	}
+	defer visitorfile.Close()
+	visitordecoder := json.NewDecoder(visitorfile)
+	err = visitordecoder.Decode(&visitor)
+	if user == username || visitor.Adminstatus == "admin"{
+		err := os.Remove("./users/" + user)
+		if err != nil {
+			println("error opening the file")
+		}
+	
 	}
 	http.Redirect(w, r, "/users/", http.StatusFound)
 }
