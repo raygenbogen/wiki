@@ -111,8 +111,14 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			println("Error encrypting the password")
 		}
-
-		user := &User{Username: username, Password: string(cryptPassword), Approvalstatus: "not approved", Adminstatus: "user"}
+		userfiles, _ := ioutil.ReadDir("./users")
+		user := &User{}
+		if len(userfiles) == 1{
+			user = &User{Username: username, Password: string(cryptPassword), Approvalstatus: "approved", Adminstatus: "admin"}
+		}else{
+			user = &User{Username: username, Password: string(cryptPassword), Approvalstatus: "not approved", Adminstatus: "user"}
+		}
+		
 		filename := "./users/" + user.Username
 		jsoneduser, err := json.Marshal(user)
 		if err != nil {
