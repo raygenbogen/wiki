@@ -39,6 +39,7 @@ type Version map[string]*Page
 var startTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_start.html", "./static/templates/footer.html"))
 
 var name string
+
 func dbOpen () *sql.DB {
 	db, err := sql.Open("postgres", "user=postgres dbname=wiki sslmode=disable")
 	if err != nil {
@@ -49,18 +50,29 @@ func dbOpen () *sql.DB {
 
 
 func startPage(w http.ResponseWriter) {
-	files, _ := ioutil.ReadDir("./articles/")
-	//Note that the articles slice starts with len=0, but cap=len(files)
-	var articles []string = make([]string, 0, len(files))
-	for _, f := range files {
-		name := f.Name()
-		//We add only names that don't start with a '.':
-		if name[0] != '.' {
-			l := len(articles)
-			articles = articles[0 : l+1]
-			articles[l] = name
+
+	articles := make([]string, 0)
+
+	db := dbOpen()
+
+	rows, err := db.Query("SELECT title FROM pages")
+		if err != nil {
+			log.Fatal(err)
 		}
-	}
+
+		defer rows.Close()
+		for rows.Next() {
+			err := rows.Scan(&name)
+			if err != nil {
+					log.Fatal(err)
+			}
+			articles = append(articles, name)
+	    }
+        err = rows.Err()
+        if err != nil {
+			log.Fatal(err)
+        }
+
 	//We use an anonymous struct for rendering:
 	data := struct {
 		Title       string
