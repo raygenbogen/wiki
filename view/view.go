@@ -14,6 +14,9 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"database/sql"
+	_ "github.com/lib/pq"
+	"log"
 )
 
 type Page struct {
@@ -34,6 +37,16 @@ type User struct {
 type Version map[string]*Page
 
 var startTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_start.html", "./static/templates/footer.html"))
+
+var name string
+func dbOpen () *sql.DB {
+	db, err := sql.Open("postgres", "user=postgres dbname=wiki sslmode=disable")
+	if err != nil {
+		log.Fatal(err)
+		}
+	return db
+}
+
 
 func startPage(w http.ResponseWriter) {
 	files, _ := ioutil.ReadDir("./articles/")
