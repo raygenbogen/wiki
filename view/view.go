@@ -251,6 +251,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 	if err != nil {
 		return
 	}
+
 	username := cookie.Value
 	file, err := os.Open("./users/" + username)
 	if err != nil {
@@ -264,23 +265,32 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 		fmt.Printf("Could not decode json for user: %s\n", username)
 	}
 	//Reading in the userlist:
-	userfiles, _ := ioutil.ReadDir("./users")
-	userlist := make([]User, 0, len(userfiles))
-	for _, u := range userfiles {
-		if u.Name()[0] != '.' {
-			userfile, err := os.Open("./users/" + u.Name())
-			if err != nil {
-				fmt.Printf("Error opening file for user: %s\n", u.Name())
-			}
-			var user User
-			decoder = json.NewDecoder(userfile)
-			err = decoder.Decode(&user)
-			if err != nil {
-				fmt.Printf("Error decoding JSON in user file: %s\n", u.Name())
-			}
-			userlist = append(userlist, user)
-		}
+	//userfiles, _ := ioutil.ReadDir("./users")
+
+	userlist := make([]User, 0)
+
+	db := dbOpen()
+
+	rows, err := db.Query("SELECT name, password, approved, admin FROM users")
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	defer rows.Close()
+	var password, approved, admin string
+	for rows.Next() {
+		err := rows.Scan(&name, &password, &approved, &admin)
+		if err != nil {
+				log.Fatal(err)
+		}
+		user := User{name, password, approved, admin}
+		userlist = append(userlist, user)
+	}
+    err = rows.Err()
+    if err != nil {
+		log.Fatal(err)
+    }
+
 	//Composing data to render, and rendering:
 	data := struct {
 		Title       string
