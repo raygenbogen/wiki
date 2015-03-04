@@ -271,7 +271,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 
 	db := dbOpen()
 
-	rows, err := db.Query("SELECT name, password, approved, admin FROM users")
+	rows, err := db.Query("SELECT name, password, approved, admin FROM users ORDER BY name ASC")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -311,35 +311,50 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 }
 
 func ChangeAdminstatus(w http.ResponseWriter, r *http.Request, user string) {
-	var visitor User
-	var specificUser User
 	cookie, err := r.Cookie("User")
 	if err != nil {
 		return
 	}
 	username := cookie.Value
-	visitorfile, err := os.Open("./users/" + username)
-	if err != nil {
-		println("error opening the file")
-	}
-	defer visitorfile.Close()
-	visitordecoder := json.NewDecoder(visitorfile)
-	err = visitordecoder.Decode(&visitor)
-	userfile, err := os.Open("./users/" + user)
-	if err != nil {
-		println("error opening the file")
-	}
-	defer userfile.Close()
-	specificdecoder := json.NewDecoder(userfile)
-	err = specificdecoder.Decode(&specificUser)
-	if visitor.Adminstatus == "admin" {
-		if specificUser.Adminstatus == "admin" {
-			specificUser.Adminstatus = "user"
-		} else {
-			specificUser.Adminstatus = "admin"
+
+	db := dbOpen()
+
+	var visitorStatus string
+	var specificUserStatus string
+
+	rows, err := db.Query("SELECT admin FROM users WHERE name = $1", username)
+	defer rows.Close()
+
+	for rows.Next() {
+		err = rows.Scan(&visitorStatus)
+		fmt.Println(visitorStatus)
+		if err != nil {
+			log.Fatal(err)
 		}
-		jsonedUser, _ := json.Marshal(specificUser)
-		ioutil.WriteFile("./users/"+user, jsonedUser, 0600)
+	}
+
+	rows, err = db.Query("SELECT admin FROM users WHERE name = $1", user)
+	defer rows.Close()
+
+	for rows.Next() {
+		err = rows.Scan(&specificUserStatus)
+		fmt.Println(specificUserStatus)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+
+	if visitorStatus == "admin" {
+		if specificUserStatus == "admin" {
+			rows, _ := db.Query("UPDATE users SET admin = $1 WHERE name = $2", "user", user)
+			defer rows.Close()
+		} else {
+			rows, _ := db.Query("UPDATE users SET admin = $1 WHERE name = $2", "admin", user)
+			defer rows.Close()
+		}
+	//	jsonedUser, _ := json.Marshal(specificUser)
+	//	ioutil.WriteFile("./users/"+user, jsonedUser, 0600)
 	}
 	http.Redirect(w, r, "/users/", http.StatusFound)
 }
