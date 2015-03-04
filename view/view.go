@@ -276,7 +276,6 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 		log.Fatal(err)
 	}
 
-	defer rows.Close()
 	var password, approved, admin string
 	for rows.Next() {
 		err := rows.Scan(&name, &password, &approved, &admin)
@@ -286,6 +285,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 		user := User{name, password, approved, admin}
 		userlist = append(userlist, user)
 	}
+	defer rows.Close()
     err = rows.Err()
     if err != nil {
 		log.Fatal(err)
@@ -342,11 +342,17 @@ func ChangeAdminstatus(w http.ResponseWriter, r *http.Request, user string) {
 
 	if visitorStatus == "admin" {
 		if specificUserStatus == "admin" {
-			rows, _ := db.Query("UPDATE users SET admin = $1 WHERE name = $2", "user", user)
+			rows, err := db.Query("UPDATE users SET admin = $1 WHERE name = $2", "user", user)
 			defer rows.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
 		} else {
-			rows, _ := db.Query("UPDATE users SET admin = $1 WHERE name = $2", "admin", user)
+			rows, err := db.Query("UPDATE users SET admin = $1 WHERE name = $2", "admin", user)
 			defer rows.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	}
 	http.Redirect(w, r, "/users/", http.StatusFound)
@@ -384,11 +390,17 @@ func ChangeApprovalstatus(w http.ResponseWriter, r *http.Request, user string) {
 
 	if visitorStatus == "admin" {
 		if specificUserStatus == "approved" {
-			rows, _ := db.Query("UPDATE users SET approved = $1 WHERE name = $2", "not approved", user)
+			rows, err := db.Query("UPDATE users SET approved = $1 WHERE name = $2", "not approved", user)
 			defer rows.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
 		} else {
-			rows, _ := db.Query("UPDATE users SET approved = $1 WHERE name = $2", "approved", user)
+			rows, err := db.Query("UPDATE users SET approved = $1 WHERE name = $2", "approved", user)
 			defer rows.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	}
 	http.Redirect(w, r, "/users/", http.StatusFound)
