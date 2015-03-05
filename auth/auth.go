@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"html/template"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -136,32 +135,48 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			println("Error encrypting the password")
 		}
-		userfiles, _ := ioutil.ReadDir("./users")
-		user := &User{}
-		if len(userfiles) == 1{
-			user = &User{Username: username, Password: string(cryptPassword), Approvalstatus: "approved", Adminstatus: "admin"}
-		}else{
-			user = &User{Username: username, Password: string(cryptPassword), Approvalstatus: "not approved", Adminstatus: "user"}
-		}
-		
-		filename := "./users/" + user.Username
-		jsoneduser, err := json.Marshal(user)
+
+		db := dbOpen()
+
+		rows, err := db.Query("SELECT name FROM users")
 		if err != nil {
-			println("error making json out of user")
+			log.Fatal(err)
 		}
-		if _, err := os.Stat(filename); os.IsNotExist(err) {
-			file, erro := os.Create(filename)
-			if erro != nil {
-				println("couldn't create the file")
+		var name string
+		isnew := true
+		count_rows := 0
+		for rows.Next() {
+			count_rows += 1
+			err := rows.Scan(&name)
+			if err != nil {
+					log.Fatal(err)
 			}
-			defer file.Close()
-			ioutil.WriteFile(filename, jsoneduser, 0600)
-			http.Redirect(w, r, "/auth/", http.StatusFound)
-		} else {
+			if name == username {
+				isnew = false
+			}
+		}
+		if isnew == false {
 			renderRegister(w, "This User already exists!")
 			return
 		}
-
+		if isnew {
+			if count_rows == 0 {
+				rows, err = db.Query("INSERT INTO users (name, password, approved, admin) VALUES ($1, $2, $3, $4)", username, cryptPassword, "approved", "admin")
+				defer rows.Close()
+				if err != nil {
+					log.Fatal(err)
+					return
+				}
+			} else {
+				rows, err = db.Query("INSERT INTO users (name, password, approved, admin) VALUES ($1, $2, $3, $4)", username, cryptPassword, "not approved", "user")
+				defer rows.Close()
+				if err != nil {
+					log.Fatal(err)
+					return
+				}
+			}
+			http.Redirect(w, r, "/auth/", http.StatusFound)
+		}
 	}
 }
 
