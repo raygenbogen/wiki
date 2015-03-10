@@ -209,22 +209,30 @@ func Chkauth(f http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		username := cookie.Value
-		filename := "./users/" + username
-		if _, err := os.Stat(filename); os.IsNotExist(err) {
+
+		db := dbOpen()
+		rows, err := db.Query("SELECT password, approved, admin FROM users WHERE name = $1", username)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var password, approved, admin string
+		var user User
+
+		count_rows := 0
+		for rows.Next() {
+		    count_rows += 1
+		    err := rows.Scan(&password, &approved, &admin)
+		    if err != nil {
+		        log.Fatal(err)
+		    }
+		    user = User{username, password, approved, admin}
+		}
+		if count_rows == 0 {
+			//no user found
 			http.Redirect(w, r, "/auth/", http.StatusFound)
-			return
+		    return
 		} else {
-			file, erro := os.Open(filename)
-			if erro != nil {
-				println("Error opening the file")
-			}
-			defer file.Close()
-			decoder := json.NewDecoder(file)
-			var user User
-			err := decoder.Decode(&user)
-			if err != nil {
-				println("Error decoding json")
-			}
 			h := md5.New()
 			hashedStoredPassword := hex.EncodeToString(h.Sum([]byte(user.Password)))
 			_, err = r.Cookie(hashedStoredPassword)
@@ -234,7 +242,7 @@ func Chkauth(f http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 			if user.Approvalstatus != "approved" {
-				http.Redirect(w, r, "/auth", http.StatusFound)
+				http.Redirect(w, r, "/auth/", http.StatusFound)
 			}
 		}
 
