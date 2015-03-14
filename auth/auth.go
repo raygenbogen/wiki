@@ -39,7 +39,7 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 		enteredPassword := r.FormValue("password")
 		filename := "./users/" + username
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
-			renderAuth(w, "This User doesn't seem to exist!")
+			renderAuth(w, "Wrong Credentials!")
 			return
 
 		} else {
@@ -57,7 +57,7 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 			if user.Approvalstatus == "approved" {
 				err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(enteredPassword))
 				if err != nil {
-					renderAuth(w, "Wrong Password!")
+					renderAuth(w, "Wrong Credentials!")
 
 				} else {
 					t := time.Now()
