@@ -31,7 +31,6 @@ func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 
 func MakeVersionHandler(fn func(http.ResponseWriter, *http.Request, string, *string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		println(r.URL.Path)
 		m := versPath.FindStringSubmatch(r.URL.Path)
 		if m == nil {
 			n := validPath.FindStringSubmatch(r.URL.Path)

@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"code.google.com/p/go.crypto/bcrypt"
+	"golang.org/x/crypto/bcrypt"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
