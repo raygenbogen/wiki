@@ -5,6 +5,7 @@ import (
 	"./cert"
 	"./upload"
 	"./view"
+	"./config"
 	"log"
 	"net/http"
 	"os"
@@ -35,7 +36,7 @@ func main() {
 	http.Handle("/static/", auth.Chkauth(view.HandlerToHandleFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))))
 	http.Handle("/data/", auth.Chkauth(func(w http.ResponseWriter, r *http.Request){http.ServeFile(w,r,r.URL.Path[1:])}))
 	http.HandleFunc("/", view.MakeRedirectHandler("/view/start"))
-	//http.ListenAndServe(":8080", nil)
+	go func(){http.ListenAndServe(":8080", http.RedirectHandler("https://" + config.ReadConfig("domain") +":443", http.StatusFound))}()
 	if err := http.ListenAndServeTLS(":10443", "cert.pem", "key.pem", nil); err != nil {
 		log.Fatalf("ListenAndServeTLS error: %v", err)
 	}
