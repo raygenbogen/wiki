@@ -36,7 +36,7 @@ type Blog map[string]*Page
 
 var startTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_start.html", "./static/templates/footer.html"))
 
-func startPage(w http.ResponseWriter) {
+func startPage(w http.ResponseWriter, username string) {
 	files, _ := ioutil.ReadDir("./articles/")
 	//Note that the articles slice starts with len=0, but cap=len(files)
 	var articles []string = make([]string, 0, len(files))
@@ -50,6 +50,7 @@ func startPage(w http.ResponseWriter) {
 		}
 	}
 	//We use an anonymous struct for rendering:
+	
 	data := struct {
 		Title       string
 		MenuEntries [][2]string
@@ -60,7 +61,9 @@ func startPage(w http.ResponseWriter) {
 			{"Home", "/view/start"},
 			{"Users", "/users"},
 			{"Files", "/files"},
+			{"Blog", "/blog/"+username},
 			{"Logout", "/logout"},
+
 		},
 		articles,
 	}
@@ -95,7 +98,7 @@ func loadPage(category string , title string) (*Page, error) {
 
 var pageTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu_view.html", "./static/templates/content_view.html", "./static/templates/footer.html"))
 
-func renderPage(w http.ResponseWriter, p *Page) {
+func renderPage(w http.ResponseWriter, p *Page, username string) {
 	data := struct {
 		Title       string
 		DisplayBody template.HTML
@@ -109,6 +112,7 @@ func renderPage(w http.ResponseWriter, p *Page) {
 			{"Home", "/view/start"},
 			{"Users", "/users"},
 			{"Files", "/files"},
+			{"Blog", "/blog/"+username},
 			{"Logout", "/logout"},
 			{"Edit this Page!", "/edit/" + p.Title},
 		},
@@ -117,15 +121,21 @@ func renderPage(w http.ResponseWriter, p *Page) {
 }
 
 func ViewHandler(w http.ResponseWriter, r *http.Request, title string) {
+	cookie, err := r.Cookie("User")
+		if err != nil {
+			http.Redirect(w, r, "/auth/", http.StatusFound)
+			return
+		}
+	username := cookie.Value
 	if title == "start" {
-		startPage(w)
+		startPage(w, username)
 	} else {
 		p, err := loadPage("articles" , title)
 		if err != nil {
 			http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 			return
 		}
-		renderPage(w, p)
+		renderPage(w, p, username)
 	}
 }
 
@@ -460,8 +470,12 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 		return
 	}
 }
+var blogTemplates = template.Must(template.ParseFiles("./static/templates/blog_edit.html", "./static/templates/head.html", "./static/templates/blog_save.html", "./static/templates/content_view.html", "./static/templates/footer.html"))
 
-func BlogHandler (w http.ResponseWriter, r *http.Request, user string){
+func BlogHandler (w http.ResponseWriter, r *http.Request, user string, action string){
+	if action == "write"{
+
+	}
 	println("ready to show some blogs")
 	/*p, err := loadPage("blogs" , user)
 		if err != nil {
@@ -491,27 +505,95 @@ func BlogHandler (w http.ResponseWriter, r *http.Request, user string){
 	reverseKeys := make([]string, len(keys))
 	for i, k := range keys {
 		reverseKeys[len(keys)-i-1] = k
-		blogBody = blogBody + entries[k].DisplayBody
+		blogBody = template.HTML("<h3>"+k+"</h3>") + entries[k].DisplayBody + blogBody
 		latest = k
 	}
-	blog := &Page{Title: "Blog - " + user, DisplayBody: blogBody, Information: latest}
-	println(blogBody)
-	data := struct {
+	blog := &Page{Title: user, DisplayBody: blogBody, Information: latest}
+	cookie, err := r.Cookie("User")
+		if err != nil {
+			http.Redirect(w, r, "/auth/", http.StatusFound)
+			return
+		}
+	username := cookie.Value
+	if username == user{
+		data := struct {
 		Title       string
 		DisplayBody template.HTML
 		Information string
 		MenuEntries [][2]string
-	}{
-		blog.Title,
-		blog.DisplayBody,
-		blog.Information,
-		[][2]string{
-			{"Home", "/view/start"},
-			{"Users", "/users"},
-			{"Files", "/files"},
-			{"Logout", "/logout"},
-		},
-	}
-	pageTemplates.ExecuteTemplate(w, "main", &data)
+		}{
+			blog.Title,
+			blog.DisplayBody,
+			blog.Information,
+			[][2]string{
+				{"Home", "/view/start"},
+				{"Users", "/users"},
+				{"Files", "/files"},
+				{"Write a Blogpost", "/blog/"+user +"/write"},
+				{"Logout", "/logout"},
+			},
+		}
+		if action == "write"{
+			blogTemplates.ExecuteTemplate(w, "main", blog)
+			
+		}else{
+			pageTemplates.ExecuteTemplate(w, "main", &data)
+			println("I should load that template now")
+		}
 		
+		
+	}else{
+		data := struct {
+		Title       string
+		DisplayBody template.HTML
+		Information string
+		MenuEntries [][2]string
+		}{
+			blog.Title,
+			blog.DisplayBody,
+			blog.Information,
+			[][2]string{
+				{"Home", "/view/start"},
+				{"Users", "/users"},
+				{"Files", "/files"},
+				{"Logout", "/logout"},
+			},
+		}
+	pageTemplates.ExecuteTemplate(w, "main", &data)
+	}
+	
+		
+}
+
+func BlogSaveHandler (w http.ResponseWriter, r *http.Request, title string){
+	body := r.FormValue("body")
+
+	
+	const layout = "2006-01-02 15:04:05"
+	t := time.Now()
+	cookie, err := r.Cookie("User")
+	if err != nil {
+		// just do something
+	}
+	author := cookie.Value
+	information := "Aktualisiert:" + t.Format(layout) + " by " + string(author)
+	dBody := template.HTML(blackfriday.MarkdownBasic( []byte(html.EscapeString(body))))
+	p := &Page{Title: title, Body: body, DisplayBody: dBody, Information: information}
+	versions := make(map[string]*Page)
+	filename := "./blogs/" + p.Title
+	file, err := os.Open(filename)
+	if err == nil {
+		defer file.Close()
+		decoder := json.NewDecoder(file)
+		decoder.Decode(&versions)
+
+	}
+	versions[t.Format(layout)] = p
+	out, err := json.Marshal(versions)
+	if err != nil {
+		fmt.Println("nicht jsoned")
+	}
+
+	ioutil.WriteFile(filename, out, 0600)
+	http.Redirect(w, r, "/blog/"+title, http.StatusFound)
 }

@@ -1,0 +1,15 @@
+{{define "main"}}
+<!DOCTYPE html>
+<html>
+{{template "head" .}}
+  <body>
+    <form action="/blogsave/{{.Title}}" method="POST">
+    {{template "menu" .}}
+      <div>
+        <textarea name="body" autofocus style="width: 100%; min-height: 20em;">{{.Body}}</textarea>
+      </div>
+        </form>
+  {{template "footer"}}
+  </body>
+</html>
+{{end}}

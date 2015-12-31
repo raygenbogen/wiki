@@ -9,14 +9,14 @@ import (
 	"regexp"
 )
 
-var validPath = regexp.MustCompile("^/(edit|save|view|vers|users)/([a-zA-Z0-9]+)$")
+var validPath = regexp.MustCompile("^/(edit|save|view|vers|users|blog|blogsave)/([a-zA-Z0-9]+)$")
 var versPath = regexp.MustCompile("^/(vers)/([a-zA-Z0-9]+)/(.+)$")
 var userPath = regexp.MustCompile("^/(users)(/)?$")
 var filePath = regexp.MustCompile("^/(files)/(?)")
 var approvalPath = regexp.MustCompile("^/(changeApprovalstatus)/(.+)")
 var adminPath = regexp.MustCompile("^/(changeAdminstatus)/(.+)")
 var deleteuserpath = regexp.MustCompile("^/(remove)/(.+)")
-var blogPath = regexp.MustCompile("^/(blog)/([a-zA-Z0-9]+)$")
+var blogPath = regexp.MustCompile("^/(blog)/([a-zA-Z0-9]+)/(.+)$")
 
 func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -113,13 +113,19 @@ func MakeFileHandler(fn func(http.ResponseWriter, *http.Request, string)) http.H
 	}
 }
 
-func MakeBlogHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+func MakeBlogHandler(fn func(http.ResponseWriter, *http.Request, string, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := blogPath.FindStringSubmatch(r.URL.Path)
 		if m == nil {
-			println("not a valid path")
-			return
+			n := validPath.FindStringSubmatch(r.URL.Path)
+			if n == nil {
+				http.Redirect(w, r, "/view/start", http.StatusFound)
+				return
+			}
+		fn(w, r, n[2], "")
+		} else {
+			// show specific version
+			fn(w, r, m[2], m[3])
 		}
-		fn(w, r, m[2])
 	}
 }

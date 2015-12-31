@@ -3,6 +3,7 @@
   <thead>
     <tr>
       <th>Username</th>
+      <th>Blogs</th>
       {{if .ShowAdmin}}
       <th>Status</th>
       <th>Make Admin</th>
@@ -14,6 +15,13 @@
     {{range $u := .Users}}
     <tr>
       <td>{{$u.Username}}</td>
+      <td>
+      <form action="/blog/{{$u.Username}}" method="post">
+          <button type="submit" class="btn btn-primary">
+          Visit Blog
+          </button>
+        </form>
+      </td>
       {{if $showAdmin}}
       <td>
         <form action="/changeApprovalstatus/{{$u.Username}}" method="post">
@@ -34,6 +42,7 @@
           </button>
         </form>
       </td>
+
       
       {{end}}
     </tr>
