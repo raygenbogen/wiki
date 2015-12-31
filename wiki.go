@@ -35,6 +35,7 @@ func main() {
 	http.Handle("/static/css/", view.HandlerToHandleFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/")))))
 	http.Handle("/static/", auth.Chkauth(view.HandlerToHandleFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))))
 	http.Handle("/data/", auth.Chkauth(func(w http.ResponseWriter, r *http.Request){http.ServeFile(w,r,r.URL.Path[1:])}))
+	http.HandleFunc("/blog/", view.MakeBlogHandler(view.BlogHandler))
 	http.HandleFunc("/", view.MakeRedirectHandler("/view/start"))
 	go func(){http.ListenAndServe(":8080", http.RedirectHandler("https://" + config.ReadConfig("domain") +":443", http.StatusFound))}()
 	if err := http.ListenAndServeTLS(":10443", "cert.pem", "key.pem", nil); err != nil {

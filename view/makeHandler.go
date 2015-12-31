@@ -16,6 +16,7 @@ var filePath = regexp.MustCompile("^/(files)/(?)")
 var approvalPath = regexp.MustCompile("^/(changeApprovalstatus)/(.+)")
 var adminPath = regexp.MustCompile("^/(changeAdminstatus)/(.+)")
 var deleteuserpath = regexp.MustCompile("^/(remove)/(.+)")
+var blogPath = regexp.MustCompile("^/(blog)/([a-zA-Z0-9]+)$")
 
 func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -109,5 +110,16 @@ func MakeFileHandler(fn func(http.ResponseWriter, *http.Request, string)) http.H
 			return
 		}
 		fn(w, r, r.URL.Path)
+	}
+}
+
+func MakeBlogHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		m := blogPath.FindStringSubmatch(r.URL.Path)
+		if m == nil {
+			println("not a valid path")
+			return
+		}
+		fn(w, r, m[2])
 	}
 }

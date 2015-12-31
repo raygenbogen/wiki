@@ -32,6 +32,7 @@ type User struct {
 }
 
 type Version map[string]*Page
+type Blog map[string]*Page
 
 var startTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_start.html", "./static/templates/footer.html"))
 
@@ -66,10 +67,9 @@ func startPage(w http.ResponseWriter) {
 	startTemplates.ExecuteTemplate(w, "main", &data)
 }
 
-func loadPage(title string) (*Page, error) {
+func loadPage(category string , title string) (*Page, error) {
 	//Reading an article from disk:
-	filename := "./articles/" + title
-	file, err := os.Open(filename)
+	file, err := os.Open("./articles/"+title)
 	//Map of versions expected in the article:
 	versions := make(map[string]*Page)
 	defer file.Close()
@@ -85,9 +85,12 @@ func loadPage(title string) (*Page, error) {
 	for k := range versions {
 		if k > latest {
 			latest = k
+
 		}
 	}
 	return versions[latest], nil
+	
+	
 }
 
 var pageTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu_view.html", "./static/templates/content_view.html", "./static/templates/footer.html"))
@@ -104,9 +107,10 @@ func renderPage(w http.ResponseWriter, p *Page) {
 		p.Information,
 		[][2]string{
 			{"Home", "/view/start"},
-			{"Edit this Page!", "/edit/" + p.Title},
 			{"Users", "/users"},
 			{"Files", "/files"},
+			{"Logout", "/logout"},
+			{"Edit this Page!", "/edit/" + p.Title},
 		},
 	}
 	pageTemplates.ExecuteTemplate(w, "main", &data)
@@ -116,7 +120,7 @@ func ViewHandler(w http.ResponseWriter, r *http.Request, title string) {
 	if title == "start" {
 		startPage(w)
 	} else {
-		p, err := loadPage(title)
+		p, err := loadPage("articles" , title)
 		if err != nil {
 			http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 			return
@@ -128,7 +132,7 @@ func ViewHandler(w http.ResponseWriter, r *http.Request, title string) {
 var editTemplates = template.Must(template.ParseFiles("./static/templates/main_edit.html", "./static/templates/head.html", "./static/templates/menu_edit.html", "./static/templates/content_view.html", "./static/templates/footer.html"))
 
 func EditHandler(w http.ResponseWriter, r *http.Request, title string) {
-	p, err := loadPage(title)
+	p, err := loadPage( "articles" , title)
 	if err != nil {
 		p = &Page{Title: title}
 	}
@@ -208,8 +212,11 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 			reverseKeys,
 			[][2]string{
 				{"Home", "/view/start"},
-				{title, "/view/" + title},
+				{"Users", "/users"},
 				{"Files", "/files"},
+				{"Logout", "/logout"},
+				{title, "/view/" + title},
+				
 			},
 		}
 		versionTemplates.ExecuteTemplate(w, "main", &data)
@@ -266,7 +273,9 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 		"Overview of users",
 		[][2]string{
 			{"Home", "/view/start"},
+			{"Users", "/users"},
 			{"Files", "/files"},
+			{"Logout", "/logout"},
 			{"Delete your own Account", "/remove/"+username},
 		},
 		visitor.Adminstatus == "admin",
@@ -450,4 +459,59 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 		fileTemplates.ExecuteTemplate(w, "main", &data)
 		return
 	}
+}
+
+func BlogHandler (w http.ResponseWriter, r *http.Request, user string){
+	println("ready to show some blogs")
+	/*p, err := loadPage("blogs" , user)
+		if err != nil {
+			println(err)
+			http.Redirect(w, r, "/view/start", http.StatusFound)
+			return
+		}
+		renderPage(w, p)*/
+	filename := "./blogs/" + user
+	file, err := os.Open(filename)
+	if err != nil{
+		//println(err)
+	}
+	entries := make(map[string]*Page)
+	defer file.Close()
+	//Decoding file contents:
+	decoder := json.NewDecoder(file)
+	decoder.Decode(&entries)
+	//Finding latest version:
+	var blogBody template.HTML
+	var latest string
+	keys := make([]string, 0, len(entries))
+	for k := range entries {
+		keys = append(keys, k)
+		}
+	sort.Strings(keys)
+	reverseKeys := make([]string, len(keys))
+	for i, k := range keys {
+		reverseKeys[len(keys)-i-1] = k
+		blogBody = blogBody + entries[k].DisplayBody
+		latest = k
+	}
+	blog := &Page{Title: "Blog - " + user, DisplayBody: blogBody, Information: latest}
+	println(blogBody)
+	data := struct {
+		Title       string
+		DisplayBody template.HTML
+		Information string
+		MenuEntries [][2]string
+	}{
+		blog.Title,
+		blog.DisplayBody,
+		blog.Information,
+		[][2]string{
+			{"Home", "/view/start"},
+			{"Users", "/users"},
+			{"Files", "/files"},
+			{"Logout", "/logout"},
+		},
+	}
+	pageTemplates.ExecuteTemplate(w, "main", &data)
+		
 }
