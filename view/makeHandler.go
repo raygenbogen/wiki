@@ -93,7 +93,7 @@ func MakeAdminHandler(fn func(http.ResponseWriter, *http.Request, string)) http.
 }
 
 func DeleteUserHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
-	return func( w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		m := deleteuserpath.FindStringSubmatch(r.URL.Path)
 		if m == nil {
 			return
@@ -123,7 +123,7 @@ func MakeBlogHandler(fn func(http.ResponseWriter, *http.Request, string, string)
 				http.Redirect(w, r, "/view/start", http.StatusFound)
 				return
 			}
-		fn(w, r, n[2], "")
+			fn(w, r, n[2], "")
 		} else {
 			// show specific version
 			fn(w, r, m[2], m[3])

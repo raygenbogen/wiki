@@ -50,7 +50,7 @@ func startPage(w http.ResponseWriter, username string) {
 		}
 	}
 	//We use an anonymous struct for rendering:
-	
+
 	data := struct {
 		Title       string
 		MenuEntries [][2]string
@@ -60,19 +60,18 @@ func startPage(w http.ResponseWriter, username string) {
 		[][2]string{
 			{"Home", "/view/start"},
 			{"Users", "/users"},
-			{"Blog", "/blog/"+username},
+			{"Blog", "/blog/" + username},
 			{"Files", "/files"},
 			{"Logout", "/logout"},
-
 		},
 		articles,
 	}
 	startTemplates.ExecuteTemplate(w, "main", &data)
 }
 
-func loadPage(category string , title string) (*Page, error) {
+func loadPage(category string, title string) (*Page, error) {
 	//Reading an article from disk:
-	file, err := os.Open("./articles/"+title)
+	file, err := os.Open("./articles/" + title)
 	//Map of versions expected in the article:
 	versions := make(map[string]*Page)
 	defer file.Close()
@@ -92,8 +91,7 @@ func loadPage(category string , title string) (*Page, error) {
 		}
 	}
 	return versions[latest], nil
-	
-	
+
 }
 
 var pageTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu_view.html", "./static/templates/content_view.html", "./static/templates/footer.html"))
@@ -111,7 +109,7 @@ func renderPage(w http.ResponseWriter, p *Page, username string) {
 		[][2]string{
 			{"Home", "/view/start"},
 			{"Users", "/users"},
-			{"Blog", "/blog/"+username},
+			{"Blog", "/blog/" + username},
 			{"Files", "/files"},
 			{"Logout", "/logout"},
 			{"Edit this Page!", "/edit/" + p.Title},
@@ -122,15 +120,15 @@ func renderPage(w http.ResponseWriter, p *Page, username string) {
 
 func ViewHandler(w http.ResponseWriter, r *http.Request, title string) {
 	cookie, err := r.Cookie("User")
-		if err != nil {
-			http.Redirect(w, r, "/auth/", http.StatusFound)
-			return
-		}
+	if err != nil {
+		http.Redirect(w, r, "/auth/", http.StatusFound)
+		return
+	}
 	username := cookie.Value
 	if title == "start" {
 		startPage(w, username)
 	} else {
-		p, err := loadPage("articles" , title)
+		p, err := loadPage("articles", title)
 		if err != nil {
 			http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 			return
@@ -142,7 +140,7 @@ func ViewHandler(w http.ResponseWriter, r *http.Request, title string) {
 var editTemplates = template.Must(template.ParseFiles("./static/templates/main_edit.html", "./static/templates/head.html", "./static/templates/menu_edit.html", "./static/templates/content_view.html", "./static/templates/footer.html"))
 
 func EditHandler(w http.ResponseWriter, r *http.Request, title string) {
-	p, err := loadPage( "articles" , title)
+	p, err := loadPage("articles", title)
 	if err != nil {
 		p = &Page{Title: title}
 	}
@@ -202,10 +200,10 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 	decoder := json.NewDecoder(file)
 	decoder.Decode(&versions)
 	cookie, err := r.Cookie("User")
-		if err != nil {
-			http.Redirect(w, r, "/auth/", http.StatusFound)
-			return
-		}
+	if err != nil {
+		http.Redirect(w, r, "/auth/", http.StatusFound)
+		return
+	}
 	username := cookie.Value
 	if version == nil {
 		keys := make([]string, 0, len(versions))
@@ -228,11 +226,10 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 			[][2]string{
 				{"Home", "/view/start"},
 				{"Users", "/users"},
-				{"Blog", "/blog/"+username},
+				{"Blog", "/blog/" + username},
 				{"Files", "/files"},
 				{"Logout", "/logout"},
 				{title, "/view/" + title},
-				
 			},
 		}
 		versionTemplates.ExecuteTemplate(w, "main", &data)
@@ -290,10 +287,10 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 		[][2]string{
 			{"Home", "/view/start"},
 			{"Users", "/users"},
-			{"Blog", "/blog/"+username},
+			{"Blog", "/blog/" + username},
 			{"Files", "/files"},
 			{"Logout", "/logout"},
-			{"Delete your own Account", "/remove/"+username},
+			{"Delete your own Account", "/remove/" + username},
 		},
 		visitor.Adminstatus == "admin",
 		userlist,
@@ -384,12 +381,12 @@ func DeleteUser(w http.ResponseWriter, r *http.Request, user string) {
 	defer visitorfile.Close()
 	visitordecoder := json.NewDecoder(visitorfile)
 	err = visitordecoder.Decode(&visitor)
-	if user == username || visitor.Adminstatus == "admin"{
+	if user == username || visitor.Adminstatus == "admin" {
 		err := os.Remove("./users/" + user)
 		if err != nil {
 			println("error opening the file")
 		}
-	
+
 	}
 	http.Redirect(w, r, "/users/", http.StatusFound)
 }
@@ -460,7 +457,7 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 			http.Redirect(w, r, "/auth/", http.StatusFound)
 			return
 		}
-	username := cookie.Value
+		username := cookie.Value
 		//Composing data to render, and rendering:
 		data := struct {
 			Title       string
@@ -473,7 +470,7 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 			[][2]string{
 				{"Home", "/view/start"},
 				{"Users", "/users"},
-				{"Blog","/blog/"+username},
+				{"Blog", "/blog/" + username},
 				{"Files", "/files"},
 			},
 			menuPath,
@@ -484,92 +481,74 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 		return
 	}
 }
+
 var blogTemplates = template.Must(template.ParseFiles("./static/templates/blog_edit.html", "./static/templates/head.html", "./static/templates/blog_save.html", "./static/templates/content_view.html", "./static/templates/footer.html"))
 
-func BlogHandler (w http.ResponseWriter, r *http.Request, user string, action string){
+func BlogHandler(w http.ResponseWriter, r *http.Request, user string, action string) {
 	cookie, err := r.Cookie("User")
-		if err != nil {
-			http.Redirect(w, r, "/auth/", http.StatusFound)
-			return
-		}
+	if err != nil {
+		http.Redirect(w, r, "/auth/", http.StatusFound)
+		return
+	}
 	username := cookie.Value
-	if user == "delete"{
-		filename := "blogs/"+username
+	if user == "delete" {
+		filename := "blogs/" + username
 		file, err := os.Open(filename)
-	if err != nil{
-		//println(err)
-	}
-	entries := make(map[string]*Page)
-	defer file.Close()
-	//Decoding file contents:
-	decoder := json.NewDecoder(file)
-	decoder.Decode(&entries)
-	delete(entries, action)
-	jsonedBlog, _ := json.Marshal(entries)
-	ioutil.WriteFile("./blogs/"+username, jsonedBlog, 0600)
-	http.Redirect(w ,r, "/blog/"+username, http.StatusFound)
-	}else{
+		if err != nil {
+			//println(err)
+		}
+		entries := make(map[string]*Page)
+		defer file.Close()
+		//Decoding file contents:
+		decoder := json.NewDecoder(file)
+		decoder.Decode(&entries)
+		delete(entries, action)
+		jsonedBlog, _ := json.Marshal(entries)
+		ioutil.WriteFile("./blogs/"+username, jsonedBlog, 0600)
+		http.Redirect(w, r, "/blog/"+username, http.StatusFound)
+	} else {
 		filename := "./blogs/" + user
-	file, err := os.Open(filename)
-	if err != nil{
-		//println(err)
-	}
-	entries := make(map[string]*Page)
-	defer file.Close()
-	//Decoding file contents:
-	decoder := json.NewDecoder(file)
-	decoder.Decode(&entries)
-	//Finding latest version:
-	var blogBody template.HTML
-	var specificBlog bool = false
-	var whichBlog string
-	var information string
-	keys := make([]string, 0, len(entries))
-	for k := range entries {
-		keys = append(keys, k)
+		file, err := os.Open(filename)
+		if err != nil {
+			//println(err)
 		}
-	sort.Strings(keys)
-	reverseKeys := make([]string, len(keys))
-	for i, k := range keys {
-		reverseKeys[len(keys)-i-1] = k
-		if action !=k {
-			blogBody = template.HTML("<a href = '/blog/"+user+"/"+k+"'><h3>"+k+"</h3></a>") + entries[k].DisplayBody + blogBody
-		 	information = entries[k].Information
-		}else{
-			blogBody = entries[k].DisplayBody
-			specificBlog = true;
-			whichBlog = k
-			break
+		entries := make(map[string]*Page)
+		defer file.Close()
+		//Decoding file contents:
+		decoder := json.NewDecoder(file)
+		decoder.Decode(&entries)
+		//Finding latest version:
+		var blogBody template.HTML
+		var specificBlog bool = false
+		var whichBlog string
+		var information string
+		keys := make([]string, 0, len(entries))
+		for k := range entries {
+			keys = append(keys, k)
 		}
-		
+		sort.Strings(keys)
+		reverseKeys := make([]string, len(keys))
+		for i, k := range keys {
+			reverseKeys[len(keys)-i-1] = k
+			if action != k {
+				blogBody = template.HTML("<a href = '/blog/"+user+"/"+k+"'><h3>"+k+"</h3></a>") + entries[k].DisplayBody + blogBody
+				information = entries[k].Information
+			} else {
+				blogBody = entries[k].DisplayBody
+				specificBlog = true
+				whichBlog = k
+				break
+			}
 
-	}
-	blog := &Page{Title: user, DisplayBody: blogBody, Information: information}
-	if username == user{
-		data := struct {
-		Title       string
-		DisplayBody template.HTML
-		Information string
-		MenuEntries [][2]string
-		}{	
-			blog.Title,
-			blog.DisplayBody,
-			blog.Information,
-			[][2]string{
-				{"Home", "/view/start"},
-				{"Users", "/users"},
-				{"Files", "/files"},
-				{"Write a Blogpost", "/blog/"+user +"/write"},
-				{"Logout", "/logout"},
-			},
 		}
-		if specificBlog == true{
-			data = struct {
+		blog := &Page{Title: user, DisplayBody: blogBody, Information: information}
+		if username == user {
+			data := struct {
 				Title       string
-			DisplayBody template.HTML
-			Information string
-			MenuEntries [][2]string
-			}{	
+				DisplayBody template.HTML
+				Information string
+				MenuEntries [][2]string
+			}{
 				blog.Title,
 				blog.DisplayBody,
 				blog.Information,
@@ -577,54 +556,68 @@ func BlogHandler (w http.ResponseWriter, r *http.Request, user string, action st
 					{"Home", "/view/start"},
 					{"Users", "/users"},
 					{"Files", "/files"},
-					{"Delete Blogpost", "/blog/delete/"+whichBlog},
+					{"Write a Blogpost", "/blog/" + user + "/write"},
 					{"Logout", "/logout"},
 				},
 			}
-		}
-		if action == "write"{
-			blogTemplates.ExecuteTemplate(w, "main", blog)
-			
-		}else{
+			if specificBlog == true {
+				data = struct {
+					Title       string
+					DisplayBody template.HTML
+					Information string
+					MenuEntries [][2]string
+				}{
+					blog.Title,
+					blog.DisplayBody,
+					blog.Information,
+					[][2]string{
+						{"Home", "/view/start"},
+						{"Users", "/users"},
+						{"Files", "/files"},
+						{"Delete Blogpost", "/blog/delete/" + whichBlog},
+						{"Logout", "/logout"},
+					},
+				}
+			}
+			if action == "write" {
+				blogTemplates.ExecuteTemplate(w, "main", blog)
+
+			} else {
+				pageTemplates.ExecuteTemplate(w, "main", &data)
+			}
+
+		} else {
+			data := struct {
+				Title       string
+				DisplayBody template.HTML
+				Information string
+				MenuEntries [][2]string
+			}{
+				blog.Title,
+				blog.DisplayBody,
+				blog.Information,
+				[][2]string{
+					{"Home", "/view/start"},
+					{"Users", "/users"},
+					{"Files", "/files"},
+					{"Logout", "/logout"},
+				},
+			}
 			pageTemplates.ExecuteTemplate(w, "main", &data)
 		}
-		
-		
-	}else{
-		data := struct {
-		Title       string
-		DisplayBody template.HTML
-		Information string
-		MenuEntries [][2]string
-		}{
-			blog.Title,
-			blog.DisplayBody,
-			blog.Information,
-			[][2]string{
-				{"Home", "/view/start"},
-				{"Users", "/users"},
-				{"Files", "/files"},
-				{"Logout", "/logout"},
-			},
-		}
-	pageTemplates.ExecuteTemplate(w, "main", &data)
-	}
 
 	}
-	
-	
-		
+
 }
 
-func BlogSaveHandler (w http.ResponseWriter, r *http.Request, title string){
+func BlogSaveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	body := r.FormValue("body")
 
-	
 	const layout = "2006-01-02 15:04:05"
 	t := time.Now()
-	 information := t.Format(layout)
-	dBody := template.HTML(blackfriday.MarkdownBasic( []byte(html.EscapeString(body))))
-	p := &Page{Title: title, DisplayBody: dBody, Information: information,}
+	information := t.Format(layout)
+	dBody := template.HTML(blackfriday.MarkdownBasic([]byte(html.EscapeString(body))))
+	p := &Page{Title: title, DisplayBody: dBody, Information: information}
 	versions := make(map[string]*Page)
 	filename := "./blogs/" + p.Title
 	file, err := os.Open(filename)
@@ -637,7 +630,7 @@ func BlogSaveHandler (w http.ResponseWriter, r *http.Request, title string){
 	versions[t.Format(layout)] = p
 	out, err := json.Marshal(versions)
 	if err != nil {
-		
+
 	}
 
 	ioutil.WriteFile(filename, out, 0600)
