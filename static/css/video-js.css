@@ -506,7 +506,7 @@ body.vjs-full-window {
   height: 100%;
   width: auto;
   position: absolute;
-  left: 2.2222222em;
+  left: 4em;
   top: 0;
   padding: 0;
   margin: 0;
@@ -792,7 +792,7 @@ body.vjs-full-window {
   align-items: center; }
 
 .video-js .vjs-volume-bar {
-  margin: 1.35em; }
+  margin: 1.35em 0.45em; }
 
 .vjs-volume-bar.vjs-slider-horizontal {
   width: 5em;
@@ -800,7 +800,8 @@ body.vjs-full-window {
 
 .vjs-volume-bar.vjs-slider-vertical {
   width: 0.3em;
-  height: 5em; }
+  height: 5em;
+  margin: 1.35em auto; }
 
 .video-js .vjs-volume-level {
   position: absolute;

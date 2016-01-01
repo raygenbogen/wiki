@@ -1,6 +1,6 @@
 /**
  * @license
- * Video.js 5.4.4 <http://videojs.com/>
+ * Video.js 5.4.6 <http://videojs.com/>
  * Copyright Brightcove, Inc. <https://www.brightcove.com/>
  * Available under Apache License Version 2.0
  * <https://github.com/videojs/video.js/blob/master/LICENSE>
@@ -7402,6 +7402,8 @@ module.exports = exports['default'];
 
 exports.__esModule = true;
 
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
@@ -7411,6 +7413,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== 'function' 
 var _buttonJs = _dereq_('../button.js');
 
 var _buttonJs2 = _interopRequireDefault(_buttonJs);
+
+var _utilsFnJs = _dereq_('../utils/fn.js');
+
+var Fn = _interopRequireWildcard(_utilsFnJs);
 
 var _componentJs = _dereq_('../component.js');
 
@@ -7431,6 +7437,10 @@ var _muteToggleJs2 = _interopRequireDefault(_muteToggleJs);
 var _volumeControlVolumeBarJs = _dereq_('./volume-control/volume-bar.js');
 
 var _volumeControlVolumeBarJs2 = _interopRequireDefault(_volumeControlVolumeBarJs);
+
+var _globalDocument = _dereq_('global/document');
+
+var _globalDocument2 = _interopRequireDefault(_globalDocument);
 
 /**
  * Button for volume menu
@@ -7532,6 +7542,9 @@ var VolumeMenuButton = (function (_MenuButton) {
     menu.addChild(vb);
 
     this.volumeBar = vb;
+
+    this.attachVolumeBarEvents();
+
     return menu;
   };
 
@@ -7546,6 +7559,19 @@ var VolumeMenuButton = (function (_MenuButton) {
     _MenuButton.prototype.handleClick.call(this);
   };
 
+  VolumeMenuButton.prototype.attachVolumeBarEvents = function attachVolumeBarEvents() {
+    this.on(['mousedown', 'touchdown'], this.handleMouseDown);
+  };
+
+  VolumeMenuButton.prototype.handleMouseDown = function handleMouseDown(event) {
+    this.on(['mousemove', 'touchmove'], Fn.bind(this.volumeBar, this.volumeBar.handleMouseMove));
+    this.on(_globalDocument2['default'], ['mouseup', 'touchend'], this.handleMouseUp);
+  };
+
+  VolumeMenuButton.prototype.handleMouseUp = function handleMouseUp(event) {
+    this.off(['mousemove', 'touchmove'], Fn.bind(this.volumeBar, this.volumeBar.handleMouseMove));
+  };
+
   return VolumeMenuButton;
 })(_menuMenuButtonJs2['default']);
 
@@ -7556,7 +7582,7 @@ _componentJs2['default'].registerComponent('VolumeMenuButton', VolumeMenuButton)
 exports['default'] = VolumeMenuButton;
 module.exports = exports['default'];
 
-},{"../button.js":63,"../component.js":65,"../menu/menu-button.js":102,"../menu/menu.js":104,"./mute-toggle.js":69,"./volume-control/volume-bar.js":92}],96:[function(_dereq_,module,exports){
+},{"../button.js":63,"../component.js":65,"../menu/menu-button.js":102,"../menu/menu.js":104,"../utils/fn.js":130,"./mute-toggle.js":69,"./volume-control/volume-bar.js":92,"global/document":1}],96:[function(_dereq_,module,exports){
 /**
  * @file error-display.js
  */
@@ -19075,7 +19101,7 @@ setup.autoSetupTimeout(1, videojs);
  *
  * @type {String}
  */
-videojs.VERSION = '5.4.4';
+videojs.VERSION = '5.4.6';
 
 /**
  * The global options object. These are the settings that take effect
