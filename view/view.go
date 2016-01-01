@@ -473,18 +473,29 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 var blogTemplates = template.Must(template.ParseFiles("./static/templates/blog_edit.html", "./static/templates/head.html", "./static/templates/blog_save.html", "./static/templates/content_view.html", "./static/templates/footer.html"))
 
 func BlogHandler (w http.ResponseWriter, r *http.Request, user string, action string){
-	if action == "write"{
-
-	}
-	println("ready to show some blogs")
-	/*p, err := loadPage("blogs" , user)
+	cookie, err := r.Cookie("User")
 		if err != nil {
-			println(err)
-			http.Redirect(w, r, "/view/start", http.StatusFound)
+			http.Redirect(w, r, "/auth/", http.StatusFound)
 			return
 		}
-		renderPage(w, p)*/
-	filename := "./blogs/" + user
+	username := cookie.Value
+	if user == "delete"{
+		filename := "blogs/"+username
+		file, err := os.Open(filename)
+	if err != nil{
+		//println(err)
+	}
+	entries := make(map[string]*Page)
+	defer file.Close()
+	//Decoding file contents:
+	decoder := json.NewDecoder(file)
+	decoder.Decode(&entries)
+	delete(entries, action)
+	jsonedBlog, _ := json.Marshal(entries)
+	ioutil.WriteFile("./blogs/"+username, jsonedBlog, 0600)
+	http.Redirect(w ,r, "/blog/"+username, http.StatusFound)
+	}else{
+		filename := "./blogs/" + user
 	file, err := os.Open(filename)
 	if err != nil{
 		//println(err)
@@ -496,7 +507,9 @@ func BlogHandler (w http.ResponseWriter, r *http.Request, user string, action st
 	decoder.Decode(&entries)
 	//Finding latest version:
 	var blogBody template.HTML
-	var latest string
+	var specificBlog bool = false
+	var whichBlog string
+	var information string
 	keys := make([]string, 0, len(entries))
 	for k := range entries {
 		keys = append(keys, k)
@@ -505,23 +518,26 @@ func BlogHandler (w http.ResponseWriter, r *http.Request, user string, action st
 	reverseKeys := make([]string, len(keys))
 	for i, k := range keys {
 		reverseKeys[len(keys)-i-1] = k
-		blogBody = template.HTML("<h3>"+k+"</h3>") + entries[k].DisplayBody + blogBody
-		latest = k
-	}
-	blog := &Page{Title: user, DisplayBody: blogBody, Information: latest}
-	cookie, err := r.Cookie("User")
-		if err != nil {
-			http.Redirect(w, r, "/auth/", http.StatusFound)
-			return
+		if action !=k {
+			blogBody = template.HTML("<a href = '/blog/"+user+"/"+k+"'><h3>"+k+"</h3></a>") + entries[k].DisplayBody + blogBody
+		 	information = entries[k].Information
+		}else{
+			blogBody = entries[k].DisplayBody
+			specificBlog = true;
+			whichBlog = k
+			break
 		}
-	username := cookie.Value
+		
+
+	}
+	blog := &Page{Title: user, DisplayBody: blogBody, Information: information}
 	if username == user{
 		data := struct {
 		Title       string
 		DisplayBody template.HTML
 		Information string
 		MenuEntries [][2]string
-		}{
+		}{	
 			blog.Title,
 			blog.DisplayBody,
 			blog.Information,
@@ -533,12 +549,30 @@ func BlogHandler (w http.ResponseWriter, r *http.Request, user string, action st
 				{"Logout", "/logout"},
 			},
 		}
+		if specificBlog == true{
+			data = struct {
+				Title       string
+			DisplayBody template.HTML
+			Information string
+			MenuEntries [][2]string
+			}{	
+				blog.Title,
+				blog.DisplayBody,
+				blog.Information,
+				[][2]string{
+					{"Home", "/view/start"},
+					{"Users", "/users"},
+					{"Files", "/files"},
+					{"Delete Blogpost", "/blog/delete/"+whichBlog},
+					{"Logout", "/logout"},
+				},
+			}
+		}
 		if action == "write"{
 			blogTemplates.ExecuteTemplate(w, "main", blog)
 			
 		}else{
 			pageTemplates.ExecuteTemplate(w, "main", &data)
-			println("I should load that template now")
 		}
 		
 		
@@ -561,6 +595,9 @@ func BlogHandler (w http.ResponseWriter, r *http.Request, user string, action st
 		}
 	pageTemplates.ExecuteTemplate(w, "main", &data)
 	}
+
+	}
+	
 	
 		
 }
@@ -571,14 +608,9 @@ func BlogSaveHandler (w http.ResponseWriter, r *http.Request, title string){
 	
 	const layout = "2006-01-02 15:04:05"
 	t := time.Now()
-	cookie, err := r.Cookie("User")
-	if err != nil {
-		// just do something
-	}
-	author := cookie.Value
-	information := "Aktualisiert:" + t.Format(layout) + " by " + string(author)
+	 information := t.Format(layout)
 	dBody := template.HTML(blackfriday.MarkdownBasic( []byte(html.EscapeString(body))))
-	p := &Page{Title: title, Body: body, DisplayBody: dBody, Information: information}
+	p := &Page{Title: title, DisplayBody: dBody, Information: information,}
 	versions := make(map[string]*Page)
 	filename := "./blogs/" + p.Title
 	file, err := os.Open(filename)
@@ -591,7 +623,7 @@ func BlogSaveHandler (w http.ResponseWriter, r *http.Request, title string){
 	versions[t.Format(layout)] = p
 	out, err := json.Marshal(versions)
 	if err != nil {
-		fmt.Println("nicht jsoned")
+		
 	}
 
 	ioutil.WriteFile(filename, out, 0600)
