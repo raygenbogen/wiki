@@ -34,6 +34,7 @@ func main() {
 	http.HandleFunc("/register/", auth.Register)
 	http.HandleFunc("/auth/", auth.Auth)
 	http.Handle("/static/css/", view.HandlerToHandleFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/")))))
+	http.Handle("/static/templates/", view.HandlerToHandleFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/")))))
 	http.Handle("/static/", auth.Chkauth(view.HandlerToHandleFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))))
 	http.Handle("/data/", auth.Chkauth(func(w http.ResponseWriter, r *http.Request){http.ServeFile(w,r,r.URL.Path[1:])}))
 	http.HandleFunc("/blog/", view.MakeBlogHandler(view.BlogHandler))

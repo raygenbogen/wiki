@@ -60,8 +60,8 @@ func startPage(w http.ResponseWriter, username string) {
 		[][2]string{
 			{"Home", "/view/start"},
 			{"Users", "/users"},
-			{"Files", "/files"},
 			{"Blog", "/blog/"+username},
+			{"Files", "/files"},
 			{"Logout", "/logout"},
 
 		},
@@ -111,8 +111,8 @@ func renderPage(w http.ResponseWriter, p *Page, username string) {
 		[][2]string{
 			{"Home", "/view/start"},
 			{"Users", "/users"},
-			{"Files", "/files"},
 			{"Blog", "/blog/"+username},
+			{"Files", "/files"},
 			{"Logout", "/logout"},
 			{"Edit this Page!", "/edit/" + p.Title},
 		},
@@ -201,7 +201,12 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 
 	decoder := json.NewDecoder(file)
 	decoder.Decode(&versions)
-
+	cookie, err := r.Cookie("User")
+		if err != nil {
+			http.Redirect(w, r, "/auth/", http.StatusFound)
+			return
+		}
+	username := cookie.Value
 	if version == nil {
 		keys := make([]string, 0, len(versions))
 		for k := range versions {
@@ -223,6 +228,7 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 			[][2]string{
 				{"Home", "/view/start"},
 				{"Users", "/users"},
+				{"Blog", "/blog/"+username},
 				{"Files", "/files"},
 				{"Logout", "/logout"},
 				{title, "/view/" + title},
@@ -284,6 +290,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 		[][2]string{
 			{"Home", "/view/start"},
 			{"Users", "/users"},
+			{"Blog", "/blog/"+username},
 			{"Files", "/files"},
 			{"Logout", "/logout"},
 			{"Delete your own Account", "/remove/"+username},
@@ -448,6 +455,12 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 				}
 			}
 		}
+		cookie, err := r.Cookie("User")
+		if err != nil {
+			http.Redirect(w, r, "/auth/", http.StatusFound)
+			return
+		}
+	username := cookie.Value
 		//Composing data to render, and rendering:
 		data := struct {
 			Title       string
@@ -460,6 +473,7 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 			[][2]string{
 				{"Home", "/view/start"},
 				{"Users", "/users"},
+				{"Blog","/blog/"+username},
 				{"Files", "/files"},
 			},
 			menuPath,

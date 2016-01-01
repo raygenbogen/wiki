@@ -115,6 +115,7 @@ func MakeFileHandler(fn func(http.ResponseWriter, *http.Request, string)) http.H
 
 func MakeBlogHandler(fn func(http.ResponseWriter, *http.Request, string, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		println("MakeBloghandler")
 		m := blogPath.FindStringSubmatch(r.URL.Path)
 		if m == nil {
 			n := validPath.FindStringSubmatch(r.URL.Path)

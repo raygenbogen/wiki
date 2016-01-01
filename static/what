@@ -1,4 +1,0 @@
-Files in this directory will be served as static files by the gowiki.
-This way, it'll be possible, to add scripts to the templates.
-One of the scripts, that could be added, may be a .js markdown renderer,
-which would make for beautiful content on the pages.
