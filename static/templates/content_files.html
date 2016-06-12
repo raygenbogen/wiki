@@ -1,37 +1,23 @@
 {{define "content"}}
-<table class="table table-bordered table-striped">
-  <thead>
-    <tr>
-      <th>{{.Title}}</th>
-    </tr>
-  </thead>
- 	<tbody> 
-  {{range .Directory}}
-    <tr>
-      <td>
-        <a href="{{.Path}}/{{.Name}}">{{.Name}}</a>
-      </td>
-    </tr>
-  {{end}}
+<div class="container">
+<div class="list-group">
+{{range .Directory}}
+<a href="{{.Path}}/{{.Name}}" class="list-group-item">{{.Name}}</a>
+{{end}}
+</div>
+</div>
   {{$v := .Video}}
   {{if .Video}}
-    <tr>
-      <td align="center" valign="middle">
-        <!--<video width="1280" height="720" preload="auto" controls>
-          <source src="{{$v.Source}}" type="video/webm">
-          {{if $v.Subpath}}<track src="{{$v.Subpath}}" kind="subtitle" src="de-DE" label="german">{{end}}
-          Your browser does not support the video tag.
-        </video>-->
-        <video id="MY_VIDEO_1" class="video-js" controls
-          preload="auto" width="1280" height="720"
+    <div align="center" class="embed-responsive">
+     <video id="MY_VIDEO_1" class="video-js embed-responsive-item" controls
+          preload="auto" max-height="100%"
           data-setup="{}">
           <source src="{{$v.Source}}" type='video/webm'>
-          {{if $v.Subpath}}<track src="{{$v.Subpath}}" kind="subtitle" src="de-DE" label="german">{{end}}
+          {{if $v.Subpath}}<track src="{{$v.Subpath}}" kind="Subtitles" srclang="de" label="german">{{end}}
           <p class="vjs-no-js">To view this video please enable JavaScript, and consider upgrading to a web browser that <a href="http://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a></p>
 </video>
-      </td>
-    </tr>
+    </div>
   {{end}}
- 	</tbody>
-</table>
+ 
+
 {{end}}

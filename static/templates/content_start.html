@@ -1,20 +1,11 @@
 {{define "content"}}
 <h1>{{.Title}}</h1>
-<div>Welcome! Have a look at the existing pages below or create a new one.</div>
-<table class="table table-bordered table-striped">
-  <thead>
-    <tr>
-      <th>Article</th>
-    </tr>
-  </thead>
-  <tbody> 
-    {{range $article := .Articles}}
-    <tr>
-      <td>
-        <a href="/view/{{$article}}">{{$article}}</a>
-      </td>
-    </tr>
-    {{end}}
-  </tbody>
-</table>
+<div>Welcome! Have a look at the existing pages below or create a new one.\n</div>
+<div class="container">
+<div class="list-group">
+{{range $article := .Articles}}
+<a href="/view/{{$article}}" class="list-group-item">{{$article}}</a>
+{{end}}
+</div>
+</div>
 {{end}}

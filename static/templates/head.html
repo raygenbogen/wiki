@@ -5,8 +5,63 @@
   <link rel="shortcut icon" href="/static/favicon.ico">
   <link rel="stylesheet" href="/static/css/bootstrap.css">
   <link rel="stylesheet" href="/static/css/video-js.css">
-  <script src="/static/js/bootstrap.js"></script>
   <script src="/static/js/jquery-2.1.1.min.js"></script>
+  <script src="/static/js/bootstrap.js"></script>
   <script src="/static/js/video.js"></script>
+  <style type="text/css">
+  a.list-group-item {
+    color: #eeeeee;
+}
+  a.list-group-item:hover, a.list-group-item:focus {
+    text-decoration: none;
+    background-color: #444444;
+}
+  .list-group{
+  	text-align: center;
+  }
+  .list-group-item {
+  	background-color: #222222;
+    border: 2px solid #000000;
+}
+  
+  navbarontop{margin: 0px;}
+  body { padding-top: 0px;}
+        @media (max-width: 992px) {
+    .navbar-header {
+        float: none;
+    }
+    .navbar-left,.navbar-right {
+        float: none !important;
+    }
+    .navbar-toggle {
+        display: block;
+    }
+    .navbar-collapse {
+        border-top: 1px solid transparent;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .navbar-fixed-top {
+		top: 0;
+		border-width: 0 0 1px;
+	}
+    .navbar-collapse.collapse {
+        display: none!important;
+    }
+    .navbar-nav {
+        float: none!important;
+		margin-top: 7.5px;
+	}
+	.navbar-nav>li {
+        float: none;
+    }
+    .navbar-nav>li>a {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+    .collapse.in{
+  		display:block !important;
+	}
+}
+  </style>
 </head>
 {{end}}

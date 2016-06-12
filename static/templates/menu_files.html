@@ -1,8 +1,18 @@
 {{define "menu"}}
-<nav class="navbar navbar-fixed-top" role="navigation">
-  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-    <ul class="nav nav-tabs">
-      {{range $entry := .MenuEntries}}
+<div class=navbarontop>
+<nav class="navbar navbar-inverse" role="navigation">
+
+  <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse-1">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+      </button>
+   <a class="navbar-brand" href="/view/start">Home</a>
+    </div>
+    <div class="collapse navbar-collapse" id="navbar-collapse-1">
+      <ul class="nav navbar-nav">{{range $entry := .MenuEntries}}
       <li><a href="{{index $entry 1}}">{{index $entry 0}}</a></li>
       {{end}}
       {{range $path := .Path}}
@@ -13,4 +23,5 @@
     </ul>
   </div>
 </nav>
+</div>
 {{end}}

@@ -58,7 +58,6 @@ func startPage(w http.ResponseWriter, username string) {
 	}{
 		"start",
 		[][2]string{
-			{"Home", "/view/start"},
 			{"Users", "/users"},
 			{"Blog", "/blog/" + username},
 			{"Files", "/files"},
@@ -107,7 +106,6 @@ func renderPage(w http.ResponseWriter, p *Page, username string) {
 		p.DisplayBody,
 		p.Information,
 		[][2]string{
-			{"Home", "/view/start"},
 			{"Users", "/users"},
 			{"Blog", "/blog/" + username},
 			{"Files", "/files"},
@@ -224,7 +222,6 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 			title,
 			reverseKeys,
 			[][2]string{
-				{"Home", "/view/start"},
 				{"Users", "/users"},
 				{"Blog", "/blog/" + username},
 				{"Files", "/files"},
@@ -285,7 +282,6 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 	}{
 		"Overview of users",
 		[][2]string{
-			{"Home", "/view/start"},
 			{"Users", "/users"},
 			{"Blog", "/blog/" + username},
 			{"Files", "/files"},
@@ -437,6 +433,7 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 				dirs = append(dirs, dirData{path, f.Name()})
 			}
 		}
+		println(path)
 		//Case we don't have a dir:
 		type videoData struct{ Source, Subpath string }
 		var video *videoData
@@ -445,7 +442,10 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 			vFile, err := os.Stat(localPath)
 			if err == nil && videoFile.MatchString(vFile.Name()) {
 				video = &videoData{localPath[1:], ""}
+				println(localPath)
+				println(localPath[2:])
 				vttPath := strings.Replace(localPath, filepath.Ext(localPath), ".vtt", 1)
+				println(vttPath)
 				_, err := os.Stat(vttPath)
 				if err == nil {
 					video.Subpath = vttPath[1:]
@@ -468,7 +468,6 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 		}{
 			"Files",
 			[][2]string{
-				{"Home", "/view/start"},
 				{"Users", "/users"},
 				{"Blog", "/blog/" + username},
 				{"Files", "/files"},
@@ -553,7 +552,6 @@ func BlogHandler(w http.ResponseWriter, r *http.Request, user string, action str
 				blog.DisplayBody,
 				blog.Information,
 				[][2]string{
-					{"Home", "/view/start"},
 					{"Users", "/users"},
 					{"Files", "/files"},
 					{"Write a Blogpost", "/blog/" + user + "/write"},
@@ -571,7 +569,6 @@ func BlogHandler(w http.ResponseWriter, r *http.Request, user string, action str
 					blog.DisplayBody,
 					blog.Information,
 					[][2]string{
-						{"Home", "/view/start"},
 						{"Users", "/users"},
 						{"Files", "/files"},
 						{"Delete Blogpost", "/blog/delete/" + whichBlog},
@@ -597,7 +594,6 @@ func BlogHandler(w http.ResponseWriter, r *http.Request, user string, action str
 				blog.DisplayBody,
 				blog.Information,
 				[][2]string{
-					{"Home", "/view/start"},
 					{"Users", "/users"},
 					{"Files", "/files"},
 					{"Logout", "/logout"},
