@@ -10,7 +10,7 @@
   {{if .Video}}
     <div align="center" class="embed-responsive">
      <video id="MY_VIDEO_1" class="video-js embed-responsive-item" controls
-          preload="auto" max-height="100%"
+          preload="auto" height="500"
           data-setup="{}">
           <source src="{{$v.Source}}" type='video/webm'>
           {{if $v.Subpath}}<track src="{{$v.Subpath}}" kind="Subtitles" srclang="de" label="german">{{end}}
