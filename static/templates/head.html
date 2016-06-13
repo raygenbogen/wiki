@@ -1,6 +1,7 @@
 {{define "head"}}
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ .Title }}</title>
   <link rel="shortcut icon" href="/static/favicon.ico">
   <link rel="stylesheet" href="/static/css/bootstrap.css">
@@ -9,6 +10,66 @@
   <script src="/static/js/bootstrap.js"></script>
   <script src="/static/js/video.js"></script>
   <style type="text/css">
+
+
+  textarea{
+  	background-color: #808080 !important;
+  	border-width: 3px;
+  }
+  #versions{
+  float:right;
+  width:85%;
+  height: 90%;
+  overflow-y: hidden;
+  margin-top: -50px;
+}
+.nav > li > input:hover, .nav > li > input:focus {
+    text-decoration: none;
+    background: #transparent;
+    color: #ffffff;
+}
+.navbar-nav > li > input {
+    margin-right: 2px;
+    line-height: 1.428571429;
+    border: 1px solid transparent;
+    border-radius: 4px 4px 0 0;
+  }
+ .nav > li > input {
+    background: transparent;
+    position: relative;
+    display: block;
+    padding: 13px 15px;
+    font-size: larger;
+    color: #808080;
+}
+
+body > footer {
+  position: fixed;
+  bottom: 0px;
+  right: 0px;
+  background-color: #444;
+
+}
+form {
+  display: inline;
+}
+a.list-group-item:hover, button.list-group-item:hover, a.list-group-item:focus, button.list-group-item:focus {
+    color: #ffffff;
+    }
+  .table-bordered {
+  border: 1px solid #444444;
+}
+.table-bordered > thead > tr > th,
+.table-bordered > tbody > tr > th,
+.table-bordered > tfoot > tr > th,
+.table-bordered > thead > tr > td,
+.table-bordered > tbody > tr > td,
+.table-bordered > tfoot > tr > td {
+  border: 1px solid #222222;
+}
+.table-striped > tbody > tr:nth-of-type(odd) {
+  background-color: #222222;
+}
   a.list-group-item {
     color: #eeeeee;
 }
@@ -25,7 +86,11 @@
 }
   
   navbarontop{margin: 0px;}
-  body { padding-top: 0px;}
+  body { 
+  	padding-top: 0px;
+  	color: #ffffff;
+  	background-color: #444444;
+  }
         @media (max-width: 992px) {
     .navbar-header {
         float: none;

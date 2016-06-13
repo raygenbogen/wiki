@@ -286,6 +286,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 			{"Blog", "/blog/" + username},
 			{"Files", "/files"},
 			{"Logout", "/logout"},
+			{"Change Password","/cng"},
 			{"Delete your own Account", "/remove/" + username},
 		},
 		visitor.Adminstatus == "admin",
