@@ -34,7 +34,7 @@ type User struct {
 type Version map[string]*Page
 type Blog map[string]*Page
 
-var startTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_start.html", "./static/templates/footer.html"))
+var startTemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu_start.html", "./static/templates/content_start.html", "./static/templates/footer.html"))
 
 func startPage(w http.ResponseWriter, username string) {
 	files, _ := ioutil.ReadDir("./articles/")
@@ -58,7 +58,6 @@ func startPage(w http.ResponseWriter, username string) {
 	}{
 		"start",
 		[][2]string{
-			{"Users", "/users"},
 			{"Blog", "/blog/" + username},
 			{"Files", "/files"},
 			{"Logout", "/logout"},
@@ -106,7 +105,6 @@ func renderPage(w http.ResponseWriter, p *Page, username string) {
 		p.DisplayBody,
 		p.Information,
 		[][2]string{
-			{"Users", "/users"},
 			{"Blog", "/blog/" + username},
 			{"Files", "/files"},
 			{"Logout", "/logout"},
@@ -222,7 +220,6 @@ func VersionHandler(w http.ResponseWriter, r *http.Request, title string, versio
 			title,
 			reverseKeys,
 			[][2]string{
-				{"Users", "/users"},
 				{"Blog", "/blog/" + username},
 				{"Files", "/files"},
 				{"Logout", "/logout"},
@@ -282,11 +279,10 @@ func UserHandler(w http.ResponseWriter, r *http.Request, user string) {
 	}{
 		"Overview of users",
 		[][2]string{
-			{"Users", "/users"},
 			{"Blog", "/blog/" + username},
 			{"Files", "/files"},
 			{"Logout", "/logout"},
-			{"Change Password","/cng"},
+			{"Change Password", "/cng"},
 			{"Delete your own Account", "/remove/" + username},
 		},
 		visitor.Adminstatus == "admin",
@@ -469,7 +465,6 @@ func FileHandler(w http.ResponseWriter, r *http.Request, path string) {
 		}{
 			"Files",
 			[][2]string{
-				{"Users", "/users"},
 				{"Blog", "/blog/" + username},
 				{"Files", "/files"},
 			},
@@ -553,7 +548,6 @@ func BlogHandler(w http.ResponseWriter, r *http.Request, user string, action str
 				blog.DisplayBody,
 				blog.Information,
 				[][2]string{
-					{"Users", "/users"},
 					{"Files", "/files"},
 					{"Write a Blogpost", "/blog/" + user + "/write"},
 					{"Logout", "/logout"},
@@ -570,7 +564,6 @@ func BlogHandler(w http.ResponseWriter, r *http.Request, user string, action str
 					blog.DisplayBody,
 					blog.Information,
 					[][2]string{
-						{"Users", "/users"},
 						{"Files", "/files"},
 						{"Delete Blogpost", "/blog/delete/" + whichBlog},
 						{"Logout", "/logout"},

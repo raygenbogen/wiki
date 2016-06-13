@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-var templates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_auth.html", "./static/templates/footer.html"))
-
+var authtemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_auth.html", "./static/templates/footer.html"))
+var cngtemplates = template.Must(template.ParseFiles("./static/templates/main.html", "./static/templates/head.html", "./static/templates/menu.html", "./static/templates/content_password.html", "./static/templates/footer.html"))
 type RenderData struct {
 	Title       string
 	Headline    string
@@ -82,14 +82,13 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 }
 
 func renderAuth(w http.ResponseWriter, message string) {
-	templates.ExecuteTemplate(w, "main", &RenderData{
+	authtemplates.ExecuteTemplate(w, "main", &RenderData{
 		"Login",
 		"Login",
 		message,
 		"/auth/",
 		"Login",
 		[][2]string{
-			{"Home", "/view/start"},
 			{"Create Account", "/register"},
 		},
 	})
@@ -141,13 +140,13 @@ func Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func renderRegister(w http.ResponseWriter, message string) {
-	templates.ExecuteTemplate(w, "main", &RenderData{
+	authtemplates.ExecuteTemplate(w, "main", &RenderData{
 		"Create Account",
 		"Register",
 		message,
 		"/register/",
 		"Create",
-		[][2]string{{"Home", "/view/start"}},
+		[][2]string{},
 	})
 }
 
@@ -202,7 +201,73 @@ func Chkauth(f http.HandlerFunc) http.HandlerFunc {
 	}
 
 }
+func renderCng(w http.ResponseWriter, message string) {
+	cngtemplates.ExecuteTemplate(w, "main", &RenderData{
+		"",
+		"",
+		message,
+		"",
+		"",
+		[][2]string{{"Home", "/view/start"}},
+	})
+}
 
+func ChangePassword(w http.ResponseWriter, r *http.Request){
+	println("change it now")
+	switch r.Method {
+	case "GET":
+		renderCng(w, "")
+	case "POST":
+		first := r.FormValue("first")
+		second:= r.FormValue("second")
+		cookie, err := r.Cookie("User")
+		if err != nil {
+			http.Redirect(w, r, "/auth/", http.StatusFound)
+			return
+		}
+		username := cookie.Value
+		filename := "./users/" + username
+		if _, err := os.Stat(filename); os.IsNotExist(err) {
+			http.Redirect(w, r, "/auth/", http.StatusFound)
+			return
+		} else {
+			file, erro := os.Open(filename)
+			if erro != nil {
+				println("Error opening the file")
+			}
+			defer file.Close()
+			decoder := json.NewDecoder(file)
+			var user User
+			err := decoder.Decode(&user)
+			if err != nil {
+				println("Error decoding json")
+			}
+			if first==second && len(first) >= 8{
+				enteredPassword := first
+				storedPassword, _ := Crypt([]byte(enteredPassword))
+				user.Password = string(storedPassword)
+				jsonedUser, _ := json.Marshal(user)
+				ioutil.WriteFile("./users/"+username, jsonedUser, 0600)
+				
+				t := time.Now()
+				expiration := time.Now().AddDate(1, 0, 0)
+				h := md5.New()
+				const layout = "2006-01-02 15:04:05"
+				hashedTime := t.Format(layout)
+				hashedStoredPassword := hex.EncodeToString(h.Sum([]byte(user.Password)))
+				cookie := http.Cookie{Name: "User", Value: username, Path: "/", Expires: expiration}
+				cookie2 := http.Cookie{Name: hashedStoredPassword, Value: hashedTime, Path: "/", Expires: expiration}
+				http.SetCookie(w, &cookie)
+				http.SetCookie(w, &cookie2)
+				http.Redirect(w, r, "/view/start", http.StatusFound)
+
+
+			}else{
+				renderCng(w, "Your password was too short or didn't match")
+			}
+		}
+	}
+}
 func Logout(w http.ResponseWriter, r *http.Request){
 	expiration := time.Now()
 	invalidcookie := http.Cookie{Name: "User", Value: "expired", Path: "/", Expires: expiration}
