@@ -8,15 +8,14 @@
 </div>
   {{$v := .Video}}
   {{if .Video}}
-    <div align="center" class="embed-responsive">
-     <video id="MY_VIDEO_1" class="video-js embed-responsive-item" controls
-          preload="auto" height="500"
+    <video id="MY_VIDEO_1" class="video-js" controls
+          preload="auto" height="600"
           data-setup="{}">
           <source src="{{$v.Source}}" type='video/webm'>
           {{if $v.Subpath}}<track src="{{$v.Subpath}}" kind="Subtitles" srclang="de" label="german">{{end}}
           <p class="vjs-no-js">To view this video please enable JavaScript, and consider upgrading to a web browser that <a href="http://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a></p>
 </video>
-    </div>
+    
   {{end}}
  
 
